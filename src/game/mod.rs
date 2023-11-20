@@ -3,6 +3,7 @@ use bevy::prelude::*;
 mod player;
 mod score;
 mod systems;
+mod tile;
 
 use crate::{
     events::GameOver,
@@ -10,14 +11,14 @@ use crate::{
     AppState,
 };
 
-use self::{player::PlayerPlugin, score::ScorePlugin};
+use self::{player::PlayerPlugin, score::ScorePlugin, tile::TilePlugin};
 use systems::*;
 
 pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins((PlayerPlugin, ScorePlugin))
+        app.add_plugins((PlayerPlugin, ScorePlugin, TilePlugin))
             .add_event::<GameOver>()
             .add_state::<SimulationState>()
             .add_systems(Update, exit_game)
