@@ -12,8 +12,7 @@ use self::resources::PlayerSprites;
 
 use super::SimulationState;
 
-pub const PLAYER_SPEED: f32 = 500.0;
-pub const PLAYER_SIZE: f32 = 64.0; // This is the player sprite size.
+pub const PLAYER_SIZE: f32 = 16.0; // This is the player sprite size.
 
 pub struct PlayerPlugin;
 

@@ -4,8 +4,8 @@ use bevy::window::PrimaryWindow;
 use super::components::Player;
 use super::resources::PlayerSprites;
 use super::PLAYER_SIZE;
-use super::PLAYER_SPEED;
 use crate::TILE_SCALE;
+use crate::TILE_SIZE;
 
 pub fn spawn_player(
     mut commands: Commands,
@@ -31,38 +31,39 @@ pub fn spawn_player(
 pub fn player_movement(
     keyboard_input: Res<Input<KeyCode>>,
     mut player_query: Query<(&mut Transform, &mut Handle<Image>), With<Player>>,
-    time: Res<Time>,
     player_sprites: Res<PlayerSprites>,
 ) {
-    if let Ok((mut transform, mut sprite)) = player_query.get_single_mut() {
-        let mut direction = Vec3::ZERO;
+    if keyboard_input.any_just_pressed([KeyCode::Left, KeyCode::Right, KeyCode::Up, KeyCode::Down])
+    {
+        if let Ok((mut transform, mut sprite)) = player_query.get_single_mut() {
+            let mut direction = Vec3::ZERO;
+            if keyboard_input.pressed(KeyCode::Left) || keyboard_input.pressed(KeyCode::A) {
+                println!("Left");
+                *sprite = player_sprites.left.clone();
+                direction += Vec3::new(-1.0, 0.0, 0.0);
+            }
+            if keyboard_input.pressed(KeyCode::Right) || keyboard_input.pressed(KeyCode::D) {
+                println!("Right");
+                *sprite = player_sprites.right.clone();
+                direction += Vec3::new(1.0, 0.0, 0.0);
+            }
+            if keyboard_input.pressed(KeyCode::Up) || keyboard_input.pressed(KeyCode::W) {
+                println!("Up");
+                *sprite = player_sprites.up.clone();
+                direction += Vec3::new(0.0, 1.0, 0.0);
+            }
+            if keyboard_input.pressed(KeyCode::Down) || keyboard_input.pressed(KeyCode::S) {
+                println!("Down");
+                *sprite = player_sprites.down.clone();
+                direction += Vec3::new(0.0, -1.0, 0.0);
+            }
 
-        if keyboard_input.pressed(KeyCode::Left) || keyboard_input.pressed(KeyCode::A) {
-            println!("Left");
-            *sprite = player_sprites.left.clone();
-            direction += Vec3::new(-1.0, 0.0, 0.0);
-        }
-        if keyboard_input.pressed(KeyCode::Right) || keyboard_input.pressed(KeyCode::D) {
-            println!("Right");
-            *sprite = player_sprites.right.clone();
-            direction += Vec3::new(1.0, 0.0, 0.0);
-        }
-        if keyboard_input.pressed(KeyCode::Up) || keyboard_input.pressed(KeyCode::W) {
-            println!("Up");
-            *sprite = player_sprites.up.clone();
-            direction += Vec3::new(0.0, 1.0, 0.0);
-        }
-        if keyboard_input.pressed(KeyCode::Down) || keyboard_input.pressed(KeyCode::S) {
-            println!("Down");
-            *sprite = player_sprites.down.clone();
-            direction += Vec3::new(0.0, -1.0, 0.0);
-        }
+            if direction.length() > 0.0 {
+                direction = direction.normalize();
+            }
 
-        if direction.length() > 0.0 {
-            direction = direction.normalize();
+            transform.translation += direction * TILE_SIZE * TILE_SCALE;
         }
-
-        transform.translation += direction * PLAYER_SPEED * time.delta_seconds();
     }
 }
 

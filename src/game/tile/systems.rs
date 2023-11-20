@@ -1,12 +1,12 @@
-use super::components::Tile;
 use super::resources::TileSprites;
-use super::{TileType, TILE_MAP};
+use super::TileType;
+use super::{components::Tile, resources::GameMap};
 use crate::{TILE_SCALE, TILE_SIZE};
 use bevy::prelude::*;
 
-pub fn spawn_tiles(mut commands: Commands, tile_sprites: Res<TileSprites>) {
+pub fn spawn_tiles(mut commands: Commands, tile_sprites: Res<TileSprites>, game_map: Res<GameMap>) {
     // Render tile map
-    for (y, row) in TILE_MAP.iter().enumerate() {
+    for (y, row) in game_map.map.iter().enumerate() {
         for (x, tile) in row.iter().enumerate() {
             let texture = match tile {
                 TileType::Grass => tile_sprites.grass.clone(),
