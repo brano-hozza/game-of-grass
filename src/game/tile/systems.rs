@@ -1,18 +1,19 @@
 use super::components::Tile;
+use super::resources::TileSprites;
 use super::{TileType, TILE_MAP};
 use crate::{TILE_SCALE, TILE_SIZE};
 use bevy::prelude::*;
 
-pub fn spawn_tiles(mut commands: Commands, asset_server: Res<AssetServer>) {
+pub fn spawn_tiles(mut commands: Commands, tile_sprites: Res<TileSprites>) {
     // Render tile map
     for (y, row) in TILE_MAP.iter().enumerate() {
         for (x, tile) in row.iter().enumerate() {
             let texture = match tile {
-                TileType::Grass => asset_server.load("sprites/grass.png"),
-                TileType::Tree => asset_server.load("sprites/tree.png"),
-                TileType::Water => asset_server.load("sprites/water.png"),
-                TileType::Rock => asset_server.load("sprites/rock.png"),
-                TileType::Chest => asset_server.load("sprites/chest.png"),
+                TileType::Grass => tile_sprites.grass.clone(),
+                TileType::Tree => tile_sprites.tree.clone(),
+                TileType::Water => tile_sprites.water.clone(),
+                TileType::Rock => tile_sprites.rock.clone(),
+                TileType::Chest => tile_sprites.chest.clone(),
             };
 
             let real_x = x as f32 * TILE_SIZE * TILE_SCALE;

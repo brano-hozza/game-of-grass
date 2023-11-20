@@ -1,13 +1,16 @@
 use bevy::prelude::*;
 
 pub mod components;
+mod resources;
 mod systems;
 
 use systems::*;
 
 use crate::AppState;
 
-enum TileType {
+use self::resources::TileSprites;
+
+pub enum TileType {
     Grass,
     Tree,
     Water,
@@ -57,7 +60,8 @@ pub struct TilePlugin;
 
 impl Plugin for TilePlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(AppState::Game), spawn_tiles)
+        app.init_resource::<TileSprites>()
+            .add_systems(OnEnter(AppState::Game), spawn_tiles)
             .add_systems(OnExit(AppState::Game), despawn_tiles);
     }
 }
