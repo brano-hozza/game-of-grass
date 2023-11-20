@@ -2,44 +2,59 @@ use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 
 use super::components::Player;
+use super::resources::PlayerSprites;
 use super::PLAYER_SIZE;
 use super::PLAYER_SPEED;
+use crate::TILE_SCALE;
 
 pub fn spawn_player(
     mut commands: Commands,
     window_query: Query<&Window, With<PrimaryWindow>>,
-    asset_server: Res<AssetServer>,
+    player_sprites: Res<PlayerSprites>,
 ) {
     let window = window_query.get_single().unwrap();
 
-    commands.spawn((
-        SpriteBundle {
-            transform: Transform::from_xyz(window.width() / 2.0, window.height() / 2.0, 0.0),
-            texture: asset_server.load("sprites/player.png"),
-            ..default()
-        },
-        Player {},
-    ));
+    let x = window.width() / 2.0;
+    let y = window.height() / 2.0;
+
+    let mut sprite = SpriteBundle {
+        transform: Transform::from_xyz(x, y, 1.0),
+        texture: player_sprites.down.clone(),
+        ..default()
+    };
+
+    sprite.transform.scale *= TILE_SCALE;
+
+    commands.spawn((sprite, Player {}));
 }
 
 pub fn player_movement(
     keyboard_input: Res<Input<KeyCode>>,
-    mut player_query: Query<&mut Transform, With<Player>>,
+    mut player_query: Query<(&mut Transform, &mut Handle<Image>), With<Player>>,
     time: Res<Time>,
+    player_sprites: Res<PlayerSprites>,
 ) {
-    if let Ok(mut transform) = player_query.get_single_mut() {
+    if let Ok((mut transform, mut sprite)) = player_query.get_single_mut() {
         let mut direction = Vec3::ZERO;
 
         if keyboard_input.pressed(KeyCode::Left) || keyboard_input.pressed(KeyCode::A) {
+            println!("Left");
+            *sprite = player_sprites.left.clone();
             direction += Vec3::new(-1.0, 0.0, 0.0);
         }
         if keyboard_input.pressed(KeyCode::Right) || keyboard_input.pressed(KeyCode::D) {
+            println!("Right");
+            *sprite = player_sprites.right.clone();
             direction += Vec3::new(1.0, 0.0, 0.0);
         }
         if keyboard_input.pressed(KeyCode::Up) || keyboard_input.pressed(KeyCode::W) {
+            println!("Up");
+            *sprite = player_sprites.up.clone();
             direction += Vec3::new(0.0, 1.0, 0.0);
         }
         if keyboard_input.pressed(KeyCode::Down) || keyboard_input.pressed(KeyCode::S) {
+            println!("Down");
+            *sprite = player_sprites.down.clone();
             direction += Vec3::new(0.0, -1.0, 0.0);
         }
 

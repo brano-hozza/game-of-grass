@@ -1,5 +1,6 @@
 use super::components::Tile;
-use super::{TileType, TILE_MAP, TILE_SIZE};
+use super::{TileType, TILE_MAP};
+use crate::{TILE_SCALE, TILE_SIZE};
 use bevy::prelude::*;
 
 pub fn spawn_tiles(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -14,17 +15,18 @@ pub fn spawn_tiles(mut commands: Commands, asset_server: Res<AssetServer>) {
                 TileType::Chest => asset_server.load("sprites/chest.png"),
             };
 
-            let real_x = x as f32 * TILE_SIZE;
-            let real_y = y as f32 * TILE_SIZE;
+            let real_x = x as f32 * TILE_SIZE * TILE_SCALE;
+            let real_y = y as f32 * TILE_SIZE * TILE_SCALE;
 
-            commands.spawn((
-                SpriteBundle {
-                    transform: Transform::from_xyz(real_x, real_y, 0.0),
-                    texture,
-                    ..default()
-                },
-                Tile {},
-            ));
+            let mut sprite = SpriteBundle {
+                transform: Transform::from_xyz(real_x, real_y, 0.0),
+                texture,
+                ..default()
+            };
+
+            sprite.transform.scale *= TILE_SCALE;
+
+            commands.spawn((sprite, Tile {}));
         }
     }
 }

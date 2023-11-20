@@ -1,11 +1,14 @@
 use bevy::prelude::*;
 
 pub mod components;
+mod resources;
 mod systems;
 
 use systems::*;
 
 use crate::AppState;
+
+use self::resources::PlayerSprites;
 
 use super::SimulationState;
 
@@ -16,7 +19,8 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(AppState::Game), spawn_player)
+        app.init_resource::<PlayerSprites>()
+            .add_systems(OnEnter(AppState::Game), spawn_player)
             .add_systems(OnExit(AppState::Game), despawn_player)
             .add_systems(
                 Update,

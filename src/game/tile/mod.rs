@@ -15,7 +15,6 @@ enum TileType {
     Chest,
 }
 
-pub const TILE_SIZE: f32 = 16.0; // This is the star sprite size.
 pub const TILE_MAP: [[TileType; 5]; 5] = [
     [
         TileType::Grass,
@@ -27,7 +26,14 @@ pub const TILE_MAP: [[TileType; 5]; 5] = [
     [
         TileType::Grass,
         TileType::Grass,
+        TileType::Rock,
         TileType::Grass,
+        TileType::Grass,
+    ],
+    [
+        TileType::Grass,
+        TileType::Grass,
+        TileType::Tree,
         TileType::Grass,
         TileType::Grass,
     ],
@@ -36,21 +42,14 @@ pub const TILE_MAP: [[TileType; 5]; 5] = [
         TileType::Grass,
         TileType::Grass,
         TileType::Grass,
-        TileType::Grass,
+        TileType::Chest,
     ],
     [
         TileType::Grass,
         TileType::Grass,
         TileType::Grass,
-        TileType::Grass,
-        TileType::Grass,
-    ],
-    [
-        TileType::Grass,
-        TileType::Grass,
-        TileType::Grass,
-        TileType::Grass,
-        TileType::Grass,
+        TileType::Water,
+        TileType::Water,
     ],
 ];
 
