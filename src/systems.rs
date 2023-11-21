@@ -10,8 +10,8 @@ pub fn spawn_camera(
 ) {
     let mut window = window_query.get_single_mut().unwrap();
 
-    let win_width = (VISIBLE_WIDTH * TILE_SIZE as usize) as f32;
-    let win_height = (VISIBLE_HEIGHT * TILE_SIZE as usize) as f32;
+    let win_width = ((VISIBLE_WIDTH + 1) * TILE_SIZE as usize) as f32;
+    let win_height = ((VISIBLE_HEIGHT + 1) * TILE_SIZE as usize) as f32;
 
     window.resolution.set_physical_resolution(
         (win_width * GAME_SCALE) as u32,
@@ -19,7 +19,12 @@ pub fn spawn_camera(
     );
 
     commands.spawn(Camera2dBundle {
-        transform: Transform::from_xyz(win_width / 2.0, win_height / 2.0, 999.).with_scale(Vec3 {
+        transform: Transform::from_xyz(
+            (win_width - TILE_SIZE * 2.0) / 2.0,
+            (win_height - TILE_SIZE * 2.0) / 2.0,
+            999.,
+        )
+        .with_scale(Vec3 {
             x: 1.0 / GAME_SCALE,
             y: 1.0 / GAME_SCALE,
             z: 1.0,

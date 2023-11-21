@@ -11,10 +11,9 @@ pub fn spawn_tiles(
 ) {
     let text_style = TextStyle {
         font: asset_server.load("fonts/FiraSans-Bold.ttf"),
-        font_size: 60.0,
-        color: Color::WHITE,
+        font_size: 10.0,
+        color: Color::BLACK,
     };
-    let text_alignment = TextAlignment::Center;
 
     // Render tile map
     for x in 0..game_map.width {
@@ -25,14 +24,24 @@ pub fn spawn_tiles(
             let real_x = x as f32 * TILE_SIZE;
             let real_y = y as f32 * TILE_SIZE;
 
-            commands.spawn((
-                SpriteBundle {
-                    transform: Transform::from_xyz(real_x, real_y, 0.0),
-                    texture,
-                    ..default()
-                },
-                Tile {},
-            ));
+            commands
+                .spawn((
+                    SpriteBundle {
+                        transform: Transform::from_xyz(real_x, real_y, 0.0),
+                        texture,
+                        ..default()
+                    },
+                    Tile {},
+                ))
+                .with_children(|parent| {
+                    parent.spawn((Text2dBundle {
+                        text: Text::from_section(
+                            (x + y * game_map.width).to_string(),
+                            text_style.clone(),
+                        ),
+                        ..default()
+                    },));
+                });
         }
     }
 }

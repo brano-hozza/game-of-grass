@@ -69,8 +69,8 @@ impl Default for GameMap {
     fn default() -> GameMap {
         let mut map = GameMap {
             map: [TileType::Grass; VISIBLE_WIDTH * VISIBLE_HEIGHT],
-            width: 16,
-            height: 16,
+            width: VISIBLE_WIDTH,
+            height: VISIBLE_HEIGHT,
         };
         // Add some trees
         map.set_tile(1, 1, TileType::Tree);
