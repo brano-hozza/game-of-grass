@@ -1,3 +1,5 @@
+use std::ops::Index;
+
 use bevy::prelude::*;
 
 use super::TileType;
@@ -22,6 +24,20 @@ impl FromWorld for TileSprites {
             water: asset_server.load("sprites/tiles/water.png"),
             rock: asset_server.load("sprites/tiles/rock.png"),
             chest: asset_server.load("sprites/tiles/chest.png"),
+        }
+    }
+}
+
+impl Index<TileType> for TileSprites {
+    type Output = Handle<Image>;
+
+    fn index(&self, tile_type: TileType) -> &Self::Output {
+        match tile_type {
+            TileType::Grass => &self.grass,
+            TileType::Tree => &self.tree,
+            TileType::Water => &self.water,
+            TileType::Rock => &self.rock,
+            TileType::Chest => &self.chest,
         }
     }
 }
