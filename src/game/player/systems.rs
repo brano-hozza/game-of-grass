@@ -3,14 +3,12 @@ use bevy::window::PrimaryWindow;
 
 use super::components::Player;
 use super::resources::PlayerSprites;
-use crate::SCALED_TILE_SIZE;
-use crate::TILE_SCALE;
+use crate::TILE_SIZE;
 
 pub fn spawn_player(mut commands: Commands, player_sprites: Res<PlayerSprites>) {
     commands.spawn((
         SpriteBundle {
-            transform: Transform::from_xyz(0.0, 0.0, 0.1)
-                .with_scale(Vec3::new(TILE_SCALE, TILE_SCALE, 1.0)),
+            transform: Transform::from_xyz(0.0, 0.0, 0.1),
             texture: player_sprites.down.clone(),
             ..default()
         },
@@ -49,7 +47,7 @@ pub fn player_movement(
                 direction = direction.normalize();
             }
 
-            transform.translation += direction * SCALED_TILE_SIZE;
+            transform.translation += direction * TILE_SIZE;
         }
     }
 }
@@ -62,9 +60,9 @@ pub fn confine_player_movement(
         let window = window_query.get_single().unwrap();
 
         let x_min = 0.0;
-        let x_max = window.width() - SCALED_TILE_SIZE;
+        let x_max = window.width() - TILE_SIZE;
         let y_min = 0.0;
-        let y_max = window.height() - SCALED_TILE_SIZE;
+        let y_max = window.height() - TILE_SIZE;
 
         let mut translation = player_transform.translation;
 

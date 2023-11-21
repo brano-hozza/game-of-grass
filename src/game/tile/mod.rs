@@ -10,7 +10,7 @@ use crate::AppState;
 
 use self::resources::{GameMap, TileSprites};
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub enum TileType {
     Grass,
     Tree,

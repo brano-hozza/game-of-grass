@@ -31,6 +31,9 @@ pub enum AppState {
     GameOver,
 }
 
-const TILE_SIZE: f32 = 16.0; // This is the basic tile size.
-pub const TILE_SCALE: f32 = 2.0; // This is the scale of the tile sprite.
-pub const SCALED_TILE_SIZE: f32 = TILE_SIZE * TILE_SCALE; // This is the size of the tile sprite.
+pub const VISIBLE_WIDTH: usize = 20; // This is the number of tiles visible on the x-axis.
+pub const VISIBLE_HEIGHT: usize = 20; // This is the number of tiles visible on the y-axis.
+
+pub const TILE_SIZE: f32 = 16.0; // This is the basic tile size.
+pub const GAME_SCALE: f32 = 2.0; // This is the scale of the tile sprite.
+pub const MAP_PADDING: f32 = 2.0; // This is the padding around the map.

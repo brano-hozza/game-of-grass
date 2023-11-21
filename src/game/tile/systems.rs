@@ -1,21 +1,33 @@
 use super::resources::TileSprites;
 use super::{components::Tile, resources::GameMap};
-use crate::{SCALED_TILE_SIZE, TILE_SCALE};
+use crate::TILE_SIZE;
 use bevy::prelude::*;
 
-pub fn spawn_tiles(mut commands: Commands, tile_sprites: Res<TileSprites>, game_map: Res<GameMap>) {
+pub fn spawn_tiles(
+    mut commands: Commands,
+    tile_sprites: Res<TileSprites>,
+    game_map: Res<GameMap>,
+    asset_server: Res<AssetServer>,
+) {
+    let text_style = TextStyle {
+        font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+        font_size: 60.0,
+        color: Color::WHITE,
+    };
+    let text_alignment = TextAlignment::Center;
+
     // Render tile map
-    for (y, row) in game_map.map.iter().enumerate() {
-        for (x, tile) in row.iter().enumerate() {
+    for x in 0..game_map.width {
+        for y in 0..game_map.height {
+            let tile = game_map.get_tile(x, y);
             let texture = tile_sprites[tile.clone()].clone();
 
-            let real_x = x as f32 * SCALED_TILE_SIZE;
-            let real_y = y as f32 * SCALED_TILE_SIZE;
+            let real_x = x as f32 * TILE_SIZE;
+            let real_y = y as f32 * TILE_SIZE;
 
             commands.spawn((
                 SpriteBundle {
-                    transform: Transform::from_xyz(real_x, real_y, 0.0)
-                        .with_scale(Vec3::new(TILE_SCALE, TILE_SCALE, 1.0)),
+                    transform: Transform::from_xyz(real_x, real_y, 0.0),
                     texture,
                     ..default()
                 },

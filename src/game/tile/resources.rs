@@ -2,6 +2,8 @@ use std::ops::Index;
 
 use bevy::prelude::*;
 
+use crate::{VISIBLE_HEIGHT, VISIBLE_WIDTH};
+
 use super::TileType;
 
 #[derive(Resource)]
@@ -44,28 +46,37 @@ impl Index<TileType> for TileSprites {
 
 #[derive(Resource)]
 pub struct GameMap {
-    pub map: Vec<Vec<TileType>>,
+    pub map: [TileType; VISIBLE_HEIGHT * VISIBLE_WIDTH],
+    pub width: usize,
+    pub height: usize,
+}
+
+impl GameMap {
+    pub fn get_tile(&self, x: usize, y: usize) -> &TileType {
+        &self.map[x + y * self.width]
+    }
+
+    pub fn get_tile_mut(&mut self, x: usize, y: usize) -> &mut TileType {
+        &mut self.map[x + y * self.width]
+    }
+
+    pub fn set_tile(&mut self, x: usize, y: usize, tile_type: TileType) {
+        self.map[x + y * self.width] = tile_type;
+    }
 }
 
 impl Default for GameMap {
     fn default() -> GameMap {
-        let mut map = vec![vec![TileType::Grass; 20]; 20];
+        let mut map = GameMap {
+            map: [TileType::Grass; VISIBLE_WIDTH * VISIBLE_HEIGHT],
+            width: 16,
+            height: 16,
+        };
         // Add some trees
-        map[5][5] = TileType::Tree;
-        map[5][6] = TileType::Tree;
-        map[5][7] = TileType::Tree;
+        map.set_tile(1, 1, TileType::Tree);
+        map.set_tile(2, 1, TileType::Tree);
+        map.set_tile(3, 1, TileType::Tree);
 
-        // Add some stones
-        map[10][10] = TileType::Rock;
-        map[10][11] = TileType::Rock;
-
-        // Add some water
-        map[15][15] = TileType::Water;
-        map[15][16] = TileType::Water;
-
-        // Add a chest
-        map[18][18] = TileType::Chest;
-
-        GameMap { map }
+        map
     }
 }

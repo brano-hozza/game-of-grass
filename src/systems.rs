@@ -2,12 +2,28 @@ use bevy::app::AppExit;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 
-use crate::{events::*, AppState};
+use crate::{events::*, AppState, GAME_SCALE, TILE_SIZE, VISIBLE_HEIGHT, VISIBLE_WIDTH};
 
-pub fn spawn_camera(mut commands: Commands, window_query: Query<&mut Window, With<PrimaryWindow>>) {
-    let mut window = window_query.get_single().unwrap();
+pub fn spawn_camera(
+    mut commands: Commands,
+    mut window_query: Query<&mut Window, With<PrimaryWindow>>,
+) {
+    let mut window = window_query.get_single_mut().unwrap();
+
+    let win_width = (VISIBLE_WIDTH * TILE_SIZE as usize) as f32;
+    let win_height = (VISIBLE_HEIGHT * TILE_SIZE as usize) as f32;
+
+    window.resolution.set_physical_resolution(
+        (win_width * GAME_SCALE) as u32,
+        (win_height * GAME_SCALE) as u32,
+    );
+
     commands.spawn(Camera2dBundle {
-        transform: Transform::from_xyz(window.width() / 2.0, window.height() / 2.0, 999.),
+        transform: Transform::from_xyz(win_width / 2.0, win_height / 2.0, 999.).with_scale(Vec3 {
+            x: 1.0 / GAME_SCALE,
+            y: 1.0 / GAME_SCALE,
+            z: 1.0,
+        }),
         ..default()
     });
 }
