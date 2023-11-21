@@ -1,16 +1,16 @@
 use bevy::prelude::*;
 
 pub mod components;
-mod resources;
+pub mod resources;
 mod systems;
 
 use systems::*;
 
 use crate::AppState;
 
-use self::resources::{GameMap, TileSprites};
+use self::resources::TileSprites;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum TileType {
     Grass,
     Tree,
@@ -24,8 +24,8 @@ pub struct TilePlugin;
 impl Plugin for TilePlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<TileSprites>()
-            .init_resource::<GameMap>()
             .add_systems(OnEnter(AppState::Game), spawn_tiles)
+            // .add_systems(Update, update_tiles)
             .add_systems(OnExit(AppState::Game), despawn_tiles);
     }
 }

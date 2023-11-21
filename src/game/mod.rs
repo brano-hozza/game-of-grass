@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 
+mod components;
 mod player;
 mod score;
 mod systems;
