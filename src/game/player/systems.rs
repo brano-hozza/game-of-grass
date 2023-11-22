@@ -1,9 +1,10 @@
 use bevy::window::PrimaryWindow;
 use bevy::{prelude::*, transform};
 
-use super::components::Player;
+use super::components::{Inventory, Player};
 use super::resources::PlayerSprites;
 use crate::game::components::{Point, Rotation};
+use crate::game::player::components::{Item, ItemType};
 use crate::game::tile::components::{Tile, TileMap};
 use crate::game::tile::resources::TileSprites;
 use crate::game::tile::TileType;
@@ -19,6 +20,7 @@ pub fn spawn_player(mut commands: Commands, player_sprites: Res<PlayerSprites>) 
         Player {},
         Rotation::Down,
         Point { x: 0, y: 0 },
+        Inventory::default(),
     ));
 }
 
@@ -41,28 +43,28 @@ pub fn player_movement(
     {
         let mut direction = Vec3::ZERO;
         if keyboard_input.just_pressed(KeyCode::Left) || keyboard_input.just_pressed(KeyCode::A) {
-            println!("Player is moving left");
+            // println!("Player is moving left");
             *sprite = player_sprites.left.clone();
             *rotation = Rotation::Left;
             direction += Vec3::new(-1.0, 0.0, 0.0);
         } else if keyboard_input.just_pressed(KeyCode::Right)
             || keyboard_input.just_pressed(KeyCode::D)
         {
-            println!("Player is moving right");
+            // println!("Player is moving right");
             *sprite = player_sprites.right.clone();
             *rotation = Rotation::Right;
             direction += Vec3::new(1.0, 0.0, 0.0);
         } else if keyboard_input.just_pressed(KeyCode::Up)
             || keyboard_input.just_pressed(KeyCode::W)
         {
-            println!("Player is moving up");
+            // println!("Player is moving up");
             *sprite = player_sprites.up.clone();
             *rotation = Rotation::Up;
             direction += Vec3::new(0.0, 1.0, 0.0);
         } else if keyboard_input.just_pressed(KeyCode::Down)
             || keyboard_input.just_pressed(KeyCode::S)
         {
-            println!("Player is moving down");
+            // println!("Player is moving down");
             *sprite = player_sprites.down.clone();
             *rotation = Rotation::Down;
             direction += Vec3::new(0.0, -1.0, 0.0);
@@ -125,13 +127,13 @@ pub fn confine_player_movement(
 
 pub fn player_breaking(
     keyboard_input: Res<Input<KeyCode>>,
-    mut player_query: Query<(&Point, &Rotation), With<Player>>,
+    mut player_query: Query<(&Point, &Rotation, &mut Inventory), With<Player>>,
     mut tile_query: Query<(&mut Handle<Image>, &Point), With<Tile>>,
     mut map_query: Query<&mut TileMap>,
     tile_sprites: Res<TileSprites>,
 ) {
     if keyboard_input.pressed(KeyCode::E) {
-        if let Ok((player_coordinates, rotation)) = player_query.get_single_mut() {
+        if let Ok((player_coordinates, rotation, mut inventory)) = player_query.get_single_mut() {
             if let Ok(mut game_map) = map_query.get_single_mut() {
                 let target: Point = match rotation {
                     Rotation::Up => Point {
@@ -152,16 +154,48 @@ pub fn player_breaking(
                     },
                 };
                 if let Some(tile) = game_map.get_tile_mut(&target) {
-                    println!("Player is breaking a tile at {} {}", target.x, target.y);
-                    if *tile == TileType::Tree {
-                        println!("Player is breaking a tree");
-                        *tile = TileType::Grass;
+                    match *tile {
+                        TileType::Tree | TileType::Rock | TileType::Chest => {
+                            if let Some((mut sprite, _)) =
+                                tile_query.iter_mut().find(|(_, point)| target == **point)
+                            {
+                                inventory.add_item(Item {
+                                    item_type: match tile {
+                                        TileType::Tree => ItemType::Wood,
+                                        TileType::Rock => ItemType::Stone,
+                                        TileType::Chest => ItemType::Gold,
+                                        _ => unreachable!(),
+                                    },
+                                    amount: 1,
+                                });
 
-                        if let Some((mut sprite, _)) =
-                            tile_query.iter_mut().find(|(_, point)| target == **point)
-                        {
-                            *sprite = tile_sprites[&TileType::Grass].clone();
+                                *tile = TileType::Grass;
+                                *sprite = tile_sprites[&TileType::Grass].clone();
+
+                                println!(
+                                    "Player has {} wood",
+                                    match inventory.get_item(&ItemType::Wood) {
+                                        Some(item) => item.amount,
+                                        None => 0,
+                                    }
+                                );
+                                println!(
+                                    "Player has {} rock",
+                                    match inventory.get_item(&ItemType::Stone) {
+                                        Some(item) => item.amount,
+                                        None => 0,
+                                    }
+                                );
+                                println!(
+                                    "Player has {} gold",
+                                    match inventory.get_item(&ItemType::Gold) {
+                                        Some(item) => item.amount,
+                                        None => 0,
+                                    }
+                                );
+                            }
                         }
+                        _ => {}
                     }
                 }
             }

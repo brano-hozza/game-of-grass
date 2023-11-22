@@ -37,3 +37,5 @@ pub const VISIBLE_HEIGHT: usize = 20; // This is the number of tiles visible on 
 pub const TILE_SIZE: f32 = 16.0; // This is the basic tile size.
 pub const GAME_SCALE: f32 = 2.0; // This is the scale of the tile sprite.
 pub const MAP_PADDING: f32 = 2.0; // This is the padding around the map.
+
+pub const INVENTORY_WIDTH: u32 = 200; // This is the width of the inventory window.

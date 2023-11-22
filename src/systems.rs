@@ -2,11 +2,14 @@ use bevy::app::AppExit;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 
-use crate::{events::*, AppState, GAME_SCALE, TILE_SIZE, VISIBLE_HEIGHT, VISIBLE_WIDTH};
+use crate::{
+    events::*, AppState, GAME_SCALE, INVENTORY_WIDTH, TILE_SIZE, VISIBLE_HEIGHT, VISIBLE_WIDTH,
+};
 
 pub fn spawn_camera(
     mut commands: Commands,
     mut window_query: Query<&mut Window, With<PrimaryWindow>>,
+    asset_server: Res<AssetServer>,
 ) {
     let mut window = window_query.get_single_mut().unwrap();
 
@@ -14,13 +17,13 @@ pub fn spawn_camera(
     let win_height = ((VISIBLE_HEIGHT + 1) * TILE_SIZE as usize) as f32;
 
     window.resolution.set_physical_resolution(
-        (win_width * GAME_SCALE) as u32,
+        (win_width * GAME_SCALE) as u32 + INVENTORY_WIDTH,
         (win_height * GAME_SCALE) as u32,
     );
 
     commands.spawn(Camera2dBundle {
         transform: Transform::from_xyz(
-            (win_width - TILE_SIZE * 2.0) / 2.0,
+            (win_width - TILE_SIZE * 2.0 + INVENTORY_WIDTH as f32 / 2.0) / 2.0,
             (win_height - TILE_SIZE * 2.0) / 2.0,
             999.,
         )
@@ -31,6 +34,64 @@ pub fn spawn_camera(
         }),
         ..default()
     });
+
+    // UI
+    commands
+        .spawn(NodeBundle {
+            style: Style {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                justify_content: JustifyContent::FlexEnd,
+                ..default()
+            },
+            ..default()
+        })
+        .with_children(|parent| {
+            // left vertical fill (border)
+            parent
+                .spawn(NodeBundle {
+                    style: Style {
+                        width: Val::Px(INVENTORY_WIDTH as f32),
+                        border: UiRect::all(Val::Px(2.)),
+                        ..default()
+                    },
+                    background_color: Color::rgb(0.65, 0.65, 0.65).into(),
+                    ..default()
+                })
+                .with_children(|parent| {
+                    // left vertical fill (content)
+                    parent
+                        .spawn(NodeBundle {
+                            style: Style {
+                                width: Val::Percent(100.),
+                                ..default()
+                            },
+                            background_color: Color::rgb(0.15, 0.15, 0.15).into(),
+                            ..default()
+                        })
+                        .with_children(|parent| {
+                            // text
+                            parent.spawn((
+                                TextBundle::from_section(
+                                    "Inventory",
+                                    TextStyle {
+                                        font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                                        font_size: 30.0,
+                                        ..default()
+                                    },
+                                )
+                                .with_style(Style {
+                                    margin: UiRect::all(Val::Px(5.)),
+                                    ..default()
+                                }),
+                                // Because this is a distinct label widget and
+                                // not button/list item text, this is necessary
+                                // for accessibility to treat the text accordingly.
+                                Label,
+                            ));
+                        });
+                });
+        });
 }
 
 pub fn exit_game(
