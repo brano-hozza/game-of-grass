@@ -51,25 +51,24 @@ pub fn spawn_tiles(
             let real_x = x as f32 * TILE_SIZE;
             let real_y = y as f32 * TILE_SIZE;
 
-            commands
-                .spawn((
-                    SpriteBundle {
-                        transform: Transform::from_xyz(real_x, real_y, 0.0),
-                        texture,
-                        ..default()
-                    },
-                    Point::new(x as i32, y as i32),
-                    Tile {},
-                ))
-                .with_children(|parent| {
-                    parent.spawn((Text2dBundle {
-                        text: Text::from_section(
-                            (x + y * game_width).to_string(),
-                            text_style.clone(),
-                        ),
-                        ..default()
-                    },));
-                });
+            commands.spawn((
+                SpriteBundle {
+                    transform: Transform::from_xyz(real_x, real_y, 0.0),
+                    texture,
+                    ..default()
+                },
+                Point::new(x as i32, y as i32),
+                Tile {},
+            ));
+            // .with_children(|parent| {
+            //     parent.spawn((Text2dBundle {
+            //         text: Text::from_section(
+            //             (x + y * game_width).to_string(),
+            //             text_style.clone(),
+            //         ),
+            //         ..default()
+            //     },));
+            // });
         }
     }
     commands.spawn((game_map, Tiles {}));
