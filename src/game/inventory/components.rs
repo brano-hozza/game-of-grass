@@ -19,7 +19,7 @@ impl std::fmt::Display for ItemType {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Component)]
 pub struct Item {
     pub item_type: ItemType,
     pub amount: usize,

@@ -96,6 +96,7 @@ pub fn create_inventory(mut commands: Commands, asset_server: Res<AssetServer>) 
                                                     ..default()
                                                 },
                                             ),
+                                            item.clone(),
                                             Label,
                                             AccessibilityNode(NodeBuilder::new(Role::ListItem)),
                                         ));

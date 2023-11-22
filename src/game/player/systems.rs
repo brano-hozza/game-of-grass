@@ -130,7 +130,7 @@ pub fn player_breaking(
     mut player_query: Query<(&Point, &Rotation, &mut Inventory), With<Player>>,
     mut tile_query: Query<(&mut Handle<Image>, &Point), With<Tile>>,
     mut map_query: Query<&mut TileMap>,
-    // mut menu_query: Query<&Children, With<MenuList>>,
+    mut inventory_query: Query<(&mut Item, &mut Text)>,
     tile_sprites: Res<TileSprites>,
 ) {
     if keyboard_input.pressed(KeyCode::E) {
@@ -160,25 +160,29 @@ pub fn player_breaking(
                             if let Some((mut sprite, _)) =
                                 tile_query.iter_mut().find(|(_, point)| target == **point)
                             {
+                                let item_type = match tile {
+                                    TileType::Tree => ItemType::Wood,
+                                    TileType::Rock => ItemType::Stone,
+                                    TileType::Chest => ItemType::Gold,
+                                    _ => unreachable!(),
+                                };
                                 inventory.add_item(Item {
-                                    item_type: match tile {
-                                        TileType::Tree => ItemType::Wood,
-                                        TileType::Rock => ItemType::Stone,
-                                        TileType::Chest => ItemType::Gold,
-                                        _ => unreachable!(),
-                                    },
+                                    item_type: item_type.clone(),
                                     amount: 1,
                                 });
+                                if let Some((_, mut text)) = inventory_query
+                                    .iter_mut()
+                                    .find(|(i, _)| i.item_type == item_type)
+                                {
+                                    text.sections[0].value = format!(
+                                        "{} {}",
+                                        item_type,
+                                        inventory.get_item(&item_type).unwrap().amount
+                                    );
+                                }
 
                                 *tile = TileType::Grass;
                                 *sprite = tile_sprites[&TileType::Grass].clone();
-
-                                // if let Ok(children) = menu_query.get_single_mut() {
-                                //     for child in children.iter() {
-                                //         println!("Despawning child");
-                                //         commands.entity(*child).despawn();
-                                //     }
-                                // }
 
                                 println!(
                                     "Player has {} wood",
