@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{VISIBLE_HEIGHT, VISIBLE_WIDTH};
+use crate::{game::components::Point, VISIBLE_HEIGHT, VISIBLE_WIDTH};
 
 use super::TileType;
 #[derive(Component)]
@@ -17,18 +17,31 @@ pub struct TileMap {
 }
 
 impl TileMap {
-    pub fn get_tile(&self, x: usize, y: usize) -> &TileType {
-        &self.map[x + y * self.width]
+    fn is_safe(&self, point: &Point) -> bool {
+        point.in_bounds(
+            Point::zero(),
+            Point::new(self.width as i32, self.height as i32),
+        )
     }
 
-    pub fn get_tile_mut(&mut self, x: usize, y: usize) -> Option<&mut TileType> {
-        if x >= self.width || y >= self.height {
+    pub fn get_tile(&self, point: &Point) -> Option<&TileType> {
+        if !self.is_safe(point) {
             return None;
         }
-        Some(&mut self.map[x + y * self.width])
+        Some(&self.map[(point.x + point.y * self.width as i32) as usize])
     }
 
-    pub fn set_tile(&mut self, x: usize, y: usize, tile_type: TileType) {
-        self.map[x + y * self.width] = tile_type;
+    pub fn get_tile_mut(&mut self, point: &Point) -> Option<&mut TileType> {
+        if !self.is_safe(point) {
+            return None;
+        }
+        Some(&mut self.map[(point.x + point.y * self.width as i32) as usize])
+    }
+
+    pub fn set_tile(&mut self, point: &Point, tile_type: TileType) {
+        if !self.is_safe(point) {
+            return;
+        }
+        self.map[(point.x + point.y * self.width as i32) as usize] = tile_type;
     }
 }

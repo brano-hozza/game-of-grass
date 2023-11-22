@@ -3,6 +3,7 @@ use super::components::TileMap;
 use super::components::Tiles;
 use super::resources::TileSprites;
 use super::TileType;
+use crate::game::components::Point;
 use crate::{TILE_SIZE, VISIBLE_HEIGHT, VISIBLE_WIDTH};
 use bevy::prelude::*;
 
@@ -17,21 +18,21 @@ pub fn spawn_tiles(
         height: VISIBLE_HEIGHT,
     };
     // Add some trees
-    game_map.set_tile(1, 1, TileType::Tree);
-    game_map.set_tile(2, 1, TileType::Tree);
-    game_map.set_tile(3, 1, TileType::Tree);
+    game_map.set_tile(&Point::new(1, 2), TileType::Tree);
+    game_map.set_tile(&Point::new(2, 2), TileType::Tree);
+    game_map.set_tile(&Point::new(3, 2), TileType::Tree);
 
     // Add some water
-    game_map.set_tile(1, 2, TileType::Water);
-    game_map.set_tile(2, 2, TileType::Water);
-    game_map.set_tile(3, 2, TileType::Water);
+    game_map.set_tile(&Point::new(1, 1), TileType::Water);
+    game_map.set_tile(&Point::new(2, 1), TileType::Water);
+    game_map.set_tile(&Point::new(3, 1), TileType::Water);
 
     // Add some rocks
-    game_map.set_tile(5, 5, TileType::Rock);
-    game_map.set_tile(6, 5, TileType::Rock);
+    game_map.set_tile(&Point::new(1, 3), TileType::Rock);
+    game_map.set_tile(&Point::new(2, 3), TileType::Rock);
 
     // Add a chest
-    game_map.set_tile(5, 6, TileType::Chest);
+    game_map.set_tile(&Point::new(4, 4), TileType::Chest);
 
     // Render tile map
     println!("Rendering tile map");
@@ -45,7 +46,7 @@ pub fn spawn_tiles(
     let game_height = game_map.height;
     for x in 0..game_width {
         for y in 0..game_height {
-            let tile = game_map.get_tile(x, y);
+            let tile = game_map.get_tile(&Point::new(x as i32, y as i32)).unwrap();
             let texture = tile_sprites[tile].clone();
             let real_x = x as f32 * TILE_SIZE;
             let real_y = y as f32 * TILE_SIZE;
@@ -57,6 +58,7 @@ pub fn spawn_tiles(
                         texture,
                         ..default()
                     },
+                    Point::new(x as i32, y as i32),
                     Tile {},
                 ))
                 .with_children(|parent| {

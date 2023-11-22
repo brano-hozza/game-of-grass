@@ -1,12 +1,13 @@
-use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
+use bevy::{prelude::*, transform};
 
 use super::components::Player;
 use super::resources::PlayerSprites;
 use crate::game::components::{Point, Rotation};
-use crate::game::tile::components::TileMap;
+use crate::game::tile::components::{Tile, TileMap};
+use crate::game::tile::resources::TileSprites;
 use crate::game::tile::TileType;
-use crate::{TILE_SIZE, VISIBLE_WIDTH};
+use crate::TILE_SIZE;
 
 pub fn spawn_player(mut commands: Commands, player_sprites: Res<PlayerSprites>) {
     commands.spawn((
@@ -71,30 +72,19 @@ pub fn player_movement(
             direction = direction.normalize();
         }
 
-        let mut translation = transform.translation + direction * TILE_SIZE;
+        let new_coordination = coordinate.clone() + direction;
 
         // Transform to tile cords
         if let Ok(map) = map_query.get_single() {
-            match map.get_tile(
-                coordinate.x + direction.x as usize,
-                coordinate.y + direction.y as usize,
-            ) {
-                TileType::Water | TileType::Tree | TileType::Chest | TileType::Rock => {
-                    translation.x = transform.translation.x;
-                    translation.y = transform.translation.y;
-                }
-                TileType::Grass => {
-                    transform.translation = translation;
-                    if direction.x > coordinate.x as f32 {
-                        coordinate.x += 1;
-                    } else if direction.x < coordinate.x as f32 {
-                        coordinate.x -= 1;
-                    }
-
-                    if direction.y > coordinate.y as f32 {
-                        coordinate.y += 1;
-                    } else if direction.y < coordinate.y as f32 {
-                        coordinate.y -= 1;
+            if let Some(tile) = map.get_tile(&new_coordination) {
+                match tile {
+                    TileType::Water | TileType::Tree | TileType::Chest | TileType::Rock => {}
+                    TileType::Grass => {
+                        if new_coordination.x >= 0 && new_coordination.y >= 0 {
+                            coordinate.x += direction.x as i32;
+                            coordinate.y += direction.y as i32;
+                            transform.translation += direction * TILE_SIZE;
+                        }
                     }
                 }
             }
@@ -103,10 +93,10 @@ pub fn player_movement(
 }
 
 pub fn confine_player_movement(
-    mut player_query: Query<(&mut Transform, &mut Point), With<Player>>,
+    mut player_query: Query<&mut Transform, With<Player>>,
     window_query: Query<&Window, With<PrimaryWindow>>,
 ) {
-    if let Ok((mut player_transform, mut coordinate)) = player_query.get_single_mut() {
+    if let Ok(mut player_transform) = player_query.get_single_mut() {
         let window = window_query.get_single().unwrap();
 
         let x_min = 0.0;
@@ -136,7 +126,9 @@ pub fn confine_player_movement(
 pub fn player_breaking(
     keyboard_input: Res<Input<KeyCode>>,
     mut player_query: Query<(&Point, &Rotation), With<Player>>,
+    mut tile_query: Query<(&mut Handle<Image>, &Point), With<Tile>>,
     mut map_query: Query<&mut TileMap>,
+    tile_sprites: Res<TileSprites>,
 ) {
     if keyboard_input.pressed(KeyCode::E) {
         if let Ok((player_coordinates, rotation)) = player_query.get_single_mut() {
@@ -159,11 +151,17 @@ pub fn player_breaking(
                         y: player_coordinates.y,
                     },
                 };
-                if let Some(tile) = game_map.get_tile_mut(target.x, target.y) {
+                if let Some(tile) = game_map.get_tile_mut(&target) {
                     println!("Player is breaking a tile at {} {}", target.x, target.y);
                     if *tile == TileType::Tree {
                         println!("Player is breaking a tree");
                         *tile = TileType::Grass;
+
+                        if let Some((mut sprite, _)) =
+                            tile_query.iter_mut().find(|(_, point)| target == **point)
+                        {
+                            *sprite = tile_sprites[&TileType::Grass].clone();
+                        }
                     }
                 }
             }
