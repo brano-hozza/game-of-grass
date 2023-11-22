@@ -1,5 +1,4 @@
 pub mod components;
-pub mod events;
 mod systems;
 
 pub mod game;

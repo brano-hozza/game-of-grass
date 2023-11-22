@@ -5,6 +5,7 @@ use super::components::Player;
 use super::resources::PlayerSprites;
 use crate::game::components::{Point, Rotation};
 use crate::game::inventory::components::{Inventory, Item, ItemType};
+use crate::game::inventory::events::NewItemEvent;
 use crate::game::tile::components::{Tile, TileMap};
 use crate::game::tile::resources::TileSprites;
 use crate::game::tile::TileType;
@@ -130,7 +131,7 @@ pub fn player_breaking(
     mut player_query: Query<(&Point, &Rotation, &mut Inventory), With<Player>>,
     mut tile_query: Query<(&mut Handle<Image>, &Point), With<Tile>>,
     mut map_query: Query<&mut TileMap>,
-    mut inventory_query: Query<(&mut Item, &mut Text)>,
+    mut ev_new_item: EventWriter<NewItemEvent>,
     tile_sprites: Res<TileSprites>,
 ) {
     if keyboard_input.pressed(KeyCode::E) {
@@ -170,41 +171,16 @@ pub fn player_breaking(
                                     item_type: item_type.clone(),
                                     amount: 1,
                                 });
-                                if let Some((_, mut text)) = inventory_query
-                                    .iter_mut()
-                                    .find(|(i, _)| i.item_type == item_type)
-                                {
-                                    text.sections[0].value = format!(
-                                        "{} {}",
-                                        item_type,
-                                        inventory.get_item(&item_type).unwrap().amount
-                                    );
-                                }
+
+                                let item = inventory.get_item(&item_type).unwrap();
 
                                 *tile = TileType::Grass;
                                 *sprite = tile_sprites[&TileType::Grass].clone();
 
-                                println!(
-                                    "Player has {} wood",
-                                    match inventory.get_item(&ItemType::Wood) {
-                                        Some(item) => item.amount,
-                                        None => 0,
-                                    }
-                                );
-                                println!(
-                                    "Player has {} rock",
-                                    match inventory.get_item(&ItemType::Stone) {
-                                        Some(item) => item.amount,
-                                        None => 0,
-                                    }
-                                );
-                                println!(
-                                    "Player has {} gold",
-                                    match inventory.get_item(&ItemType::Gold) {
-                                        Some(item) => item.amount,
-                                        None => 0,
-                                    }
-                                );
+                                ev_new_item.send(NewItemEvent {
+                                    item_type,
+                                    amount: item.amount,
+                                })
                             }
                         }
                         _ => {}

@@ -8,7 +8,10 @@ use bevy::{
 
 use crate::INVENTORY_WIDTH;
 
-use super::components::Inventory;
+use super::{
+    components::{Inventory, Item},
+    events::NewItemEvent,
+};
 
 pub fn create_inventory(mut commands: Commands, asset_server: Res<AssetServer>) {
     let inventory = Inventory::default();
@@ -43,6 +46,7 @@ pub fn create_inventory(mut commands: Commands, asset_server: Res<AssetServer>) 
                                 width: Val::Percent(100.),
                                 flex_direction: FlexDirection::Column,
                                 align_items: AlignItems::Start,
+                                padding: UiRect::all(Val::Px(5.)),
                                 ..default()
                             },
                             background_color: Color::rgb(0.15, 0.15, 0.15).into(),
@@ -75,7 +79,7 @@ pub fn create_inventory(mut commands: Commands, asset_server: Res<AssetServer>) 
                                     NodeBundle {
                                         style: Style {
                                             flex_direction: FlexDirection::Column,
-                                            align_items: AlignItems::Center,
+                                            align_items: AlignItems::FlexStart,
                                             ..default()
                                         },
                                         ..default()
@@ -88,7 +92,7 @@ pub fn create_inventory(mut commands: Commands, asset_server: Res<AssetServer>) 
                                     for (item_type, item) in inventory.clone().items.iter() {
                                         parent.spawn((
                                             TextBundle::from_section(
-                                                format!("{} {}", item_type, item.amount),
+                                                format!("{} = {}", item_type, item.amount),
                                                 TextStyle {
                                                     font: asset_server
                                                         .load("fonts/FiraSans-Bold.ttf"),
@@ -105,4 +109,18 @@ pub fn create_inventory(mut commands: Commands, asset_server: Res<AssetServer>) 
                         });
                 });
         });
+}
+
+pub fn update_inventory_ui(
+    mut ev_new_item: EventReader<NewItemEvent>,
+    mut inventory_query: Query<(&mut Item, &mut Text)>,
+) {
+    for ev in ev_new_item.read() {
+        if let Some((_, mut text)) = inventory_query
+            .iter_mut()
+            .find(|(i, _)| i.item_type == ev.item_type)
+        {
+            text.sections[0].value = format!("{} = {}", ev.item_type, ev.amount);
+        }
+    }
 }
