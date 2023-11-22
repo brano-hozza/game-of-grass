@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 
-use crate::game::components::Point;
+use crate::game::{components::Point, inventory::components::Inventory};
 
-use super::components::{Inventory, Player};
+use super::components::Player;
 #[derive(Bundle)]
 pub struct PlayerBundle {
     pub player: Player,

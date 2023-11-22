@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 mod components;
+mod inventory;
 mod player;
 mod score;
 mod systems;
@@ -12,14 +13,16 @@ use crate::{
     AppState,
 };
 
-use self::{player::PlayerPlugin, score::ScorePlugin, tile::TilePlugin};
+use self::{
+    inventory::InventoryPlugin, player::PlayerPlugin, score::ScorePlugin, tile::TilePlugin,
+};
 use systems::*;
 
 pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins((PlayerPlugin, ScorePlugin, TilePlugin))
+        app.add_plugins((PlayerPlugin, ScorePlugin, TilePlugin, InventoryPlugin))
             .add_event::<GameOver>()
             .add_state::<SimulationState>()
             .add_systems(Update, exit_game)

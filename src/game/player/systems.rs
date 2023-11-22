@@ -1,10 +1,10 @@
+use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
-use bevy::{prelude::*, transform};
 
-use super::components::{Inventory, Player};
+use super::components::Player;
 use super::resources::PlayerSprites;
 use crate::game::components::{Point, Rotation};
-use crate::game::player::components::{Item, ItemType};
+use crate::game::inventory::components::{Inventory, Item, ItemType};
 use crate::game::tile::components::{Tile, TileMap};
 use crate::game::tile::resources::TileSprites;
 use crate::game::tile::TileType;
@@ -130,6 +130,7 @@ pub fn player_breaking(
     mut player_query: Query<(&Point, &Rotation, &mut Inventory), With<Player>>,
     mut tile_query: Query<(&mut Handle<Image>, &Point), With<Tile>>,
     mut map_query: Query<&mut TileMap>,
+    // mut menu_query: Query<&Children, With<MenuList>>,
     tile_sprites: Res<TileSprites>,
 ) {
     if keyboard_input.pressed(KeyCode::E) {
@@ -171,6 +172,13 @@ pub fn player_breaking(
 
                                 *tile = TileType::Grass;
                                 *sprite = tile_sprites[&TileType::Grass].clone();
+
+                                // if let Ok(children) = menu_query.get_single_mut() {
+                                //     for child in children.iter() {
+                                //         println!("Despawning child");
+                                //         commands.entity(*child).despawn();
+                                //     }
+                                // }
 
                                 println!(
                                     "Player has {} wood",

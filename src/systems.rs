@@ -1,10 +1,9 @@
-use bevy::a11y::accesskit::{NodeBuilder, Role};
+use bevy::app::AppExit;
 use bevy::input::mouse::{MouseScrollUnit, MouseWheel};
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
-use bevy::{a11y::AccessibilityNode, app::AppExit};
 
-use crate::components::ScrollingList;
+use crate::components::MenuList;
 use crate::{
     events::*, AppState, GAME_SCALE, INVENTORY_WIDTH, TILE_SIZE, VISIBLE_HEIGHT, VISIBLE_WIDTH,
 };
@@ -12,7 +11,6 @@ use crate::{
 pub fn spawn_camera(
     mut commands: Commands,
     mut window_query: Query<&mut Window, With<PrimaryWindow>>,
-    asset_server: Res<AssetServer>,
 ) {
     let mut window = window_query.get_single_mut().unwrap();
 
@@ -37,103 +35,11 @@ pub fn spawn_camera(
         }),
         ..default()
     });
-
-    // UI
-    commands
-        .spawn(NodeBundle {
-            style: Style {
-                width: Val::Percent(100.0),
-                height: Val::Percent(100.0),
-                justify_content: JustifyContent::FlexEnd,
-                ..default()
-            },
-            ..default()
-        })
-        .with_children(|parent| {
-            // left vertical fill (border)
-            parent
-                .spawn(NodeBundle {
-                    style: Style {
-                        width: Val::Px(INVENTORY_WIDTH as f32),
-                        border: UiRect::all(Val::Px(2.)),
-                        ..default()
-                    },
-                    background_color: Color::rgb(0.65, 0.65, 0.65).into(),
-                    ..default()
-                })
-                .with_children(|parent| {
-                    // left vertical fill (content)
-                    parent
-                        .spawn(NodeBundle {
-                            style: Style {
-                                width: Val::Percent(100.),
-                                flex_direction: FlexDirection::Column,
-                                ..default()
-                            },
-                            background_color: Color::rgb(0.15, 0.15, 0.15).into(),
-                            ..default()
-                        })
-                        .with_children(|parent| {
-                            // text
-                            parent.spawn((
-                                TextBundle::from_section(
-                                    "Inventory",
-                                    TextStyle {
-                                        font: asset_server.load("fonts/FiraSans-Bold.ttf"),
-                                        font_size: 30.0,
-                                        ..default()
-                                    },
-                                )
-                                .with_style(Style {
-                                    margin: UiRect::all(Val::Px(5.)),
-                                    ..default()
-                                }),
-                                // Because this is a distinct label widget and
-                                // not button/list item text, this is necessary
-                                // for accessibility to treat the text accordingly.
-                                Label,
-                            ));
-
-                            // Moving panel
-                            parent
-                                .spawn((
-                                    NodeBundle {
-                                        style: Style {
-                                            flex_direction: FlexDirection::Column,
-                                            align_items: AlignItems::Center,
-                                            ..default()
-                                        },
-                                        ..default()
-                                    },
-                                    ScrollingList::default(),
-                                    AccessibilityNode(NodeBuilder::new(Role::List)),
-                                ))
-                                .with_children(|parent| {
-                                    // List items
-                                    for i in 0..60 {
-                                        parent.spawn((
-                                            TextBundle::from_section(
-                                                format!("Item {i}"),
-                                                TextStyle {
-                                                    font: asset_server
-                                                        .load("fonts/FiraSans-Bold.ttf"),
-                                                    font_size: 20.,
-                                                    ..default()
-                                                },
-                                            ),
-                                            Label,
-                                            AccessibilityNode(NodeBuilder::new(Role::ListItem)),
-                                        ));
-                                    }
-                                });
-                        });
-                });
-        });
 }
 
 pub fn mouse_scroll(
     mut mouse_wheel_events: EventReader<MouseWheel>,
-    mut query_list: Query<(&mut ScrollingList, &mut Style, &Parent, &Node)>,
+    mut query_list: Query<(&mut MenuList, &mut Style, &Parent, &Node)>,
     query_node: Query<&Node>,
 ) {
     for mouse_wheel_event in mouse_wheel_events.read() {

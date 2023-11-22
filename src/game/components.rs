@@ -1,4 +1,4 @@
-use bevy::{ecs::query, prelude::*};
+use bevy::prelude::*;
 
 #[derive(Component, Copy, Clone)]
 pub struct Point {

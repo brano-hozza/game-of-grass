@@ -10,7 +10,7 @@ use bevy::prelude::*;
 pub fn spawn_tiles(
     mut commands: Commands,
     tile_sprites: Res<TileSprites>,
-    asset_server: Res<AssetServer>,
+    // asset_server: Res<AssetServer>,
 ) {
     let mut game_map = TileMap {
         map: [TileType::Grass; VISIBLE_WIDTH * VISIBLE_HEIGHT],
@@ -36,11 +36,11 @@ pub fn spawn_tiles(
 
     // Render tile map
     println!("Rendering tile map");
-    let text_style = TextStyle {
-        font: asset_server.load("fonts/FiraSans-Bold.ttf"),
-        font_size: 10.0,
-        color: Color::BLACK,
-    };
+    // let text_style = TextStyle {
+    //     font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+    //     font_size: 10.0,
+    //     color: Color::BLACK,
+    // };
 
     let game_width = game_map.width;
     let game_height = game_map.height;
