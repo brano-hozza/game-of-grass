@@ -16,13 +16,13 @@ pub fn spawn_player(mut commands: Commands, player_sprites: Res<PlayerSprites>) 
     commands
         .spawn((
             SpriteBundle {
-                transform: Transform::from_xyz(0.0, 0.0, 0.1),
+                transform: Transform::from_xyz(TILE_SIZE, TILE_SIZE, 0.1),
                 texture: player_sprites.down.clone(),
                 ..default()
             },
             Player {},
             Rotation::Down,
-            Point { x: 0, y: 0 },
+            Point { x: 1, y: 1 },
             Inventory::default(),
         ))
         .with_children(|parent| {

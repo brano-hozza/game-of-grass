@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{game::components::Point, VISIBLE_HEIGHT, VISIBLE_WIDTH};
+use crate::game::components::Point;
 
 use super::TileType;
 #[derive(Component)]
@@ -11,7 +11,7 @@ pub struct Tiles {}
 
 #[derive(Component)]
 pub struct TileMap {
-    pub map: [TileType; VISIBLE_HEIGHT * VISIBLE_WIDTH],
+    pub map: Vec<TileType>,
     pub width: usize,
     pub height: usize,
 }

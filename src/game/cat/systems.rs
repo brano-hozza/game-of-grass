@@ -11,7 +11,6 @@ use crate::{
 use bevy::{prelude::*, window::PrimaryWindow};
 
 pub fn spawn_cat(mut commands: Commands, asset_server: Res<AssetServer>) {
-    println!("Spawning cat!");
     let texture_handle = asset_server.load("sprites/cat.png");
     commands.spawn((
         SpriteBundle {
@@ -42,7 +41,6 @@ pub fn move_cat(
     for (mut transform, mut timer, mut rotation, mut coordinate) in query.iter_mut() {
         timer.0.tick(time.delta());
         if timer.0.just_finished() {
-            println!("Cat moved!");
             let random_rotation: Rotation = rand::random();
 
             if random_rotation != *rotation {

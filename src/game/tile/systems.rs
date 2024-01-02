@@ -3,9 +3,12 @@ use super::components::TileMap;
 use super::components::Tiles;
 use super::resources::TileTextures;
 use super::TileType;
+use super::TILE_WEIGHTS;
 use crate::game::components::Point;
 use crate::{TILE_SIZE, VISIBLE_HEIGHT, VISIBLE_WIDTH};
 use bevy::prelude::*;
+use rand::seq::SliceRandom;
+use rand::thread_rng;
 
 pub fn spawn_tiles(
     mut commands: Commands,
@@ -13,26 +16,30 @@ pub fn spawn_tiles(
     // asset_server: Res<AssetServer>,
 ) {
     let mut game_map = TileMap {
-        map: [TileType::Grass; VISIBLE_WIDTH * VISIBLE_HEIGHT],
+        map: Vec::from([TileType::Grass; VISIBLE_WIDTH * VISIBLE_HEIGHT]),
         width: VISIBLE_WIDTH,
         height: VISIBLE_HEIGHT,
     };
-    // Add some trees
-    game_map.set_tile(&Point::new(1, 2), TileType::Tree);
-    game_map.set_tile(&Point::new(2, 2), TileType::Tree);
-    game_map.set_tile(&Point::new(3, 2), TileType::Tree);
 
-    // Add some water
-    game_map.set_tile(&Point::new(1, 1), TileType::Water);
-    game_map.set_tile(&Point::new(2, 1), TileType::Water);
-    game_map.set_tile(&Point::new(3, 1), TileType::Water);
+    let mut rng = thread_rng();
+    for x in 0..game_map.width {
+        for y in 0..game_map.height {
+            if x == 0 || y == 0 || x == game_map.width - 1 || y == game_map.height - 1 {
+                game_map.set_tile(&Point::new(x as i32, y as i32), TileType::Water);
+                continue;
+            }
+            if x == 1 || y == 1 || x == game_map.width - 2 || y == game_map.height - 2 {
+                game_map.set_tile(&Point::new(x as i32, y as i32), TileType::Grass);
+                continue;
+            }
+            let random_tile = TILE_WEIGHTS
+                .choose_weighted(&mut rng, |item| item.1)
+                .unwrap()
+                .0;
 
-    // Add some rocks
-    game_map.set_tile(&Point::new(1, 3), TileType::Rock);
-    game_map.set_tile(&Point::new(2, 3), TileType::Rock);
-
-    // Add a chest
-    game_map.set_tile(&Point::new(4, 4), TileType::Chest);
+            game_map.set_tile(&Point::new(x as i32, y as i32), random_tile);
+        }
+    }
 
     // Render tile map
     let game_width = game_map.width;

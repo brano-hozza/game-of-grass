@@ -20,7 +20,7 @@ impl Point {
     }
 
     pub fn in_bounds(&self, point1: Point, point2: Point) -> bool {
-        self.x >= point1.x && self.x <= point2.x && self.y >= point1.y && self.y <= point2.y
+        self.x >= point1.x && self.x < point2.x && self.y >= point1.y && self.y < point2.y
     }
 }
 

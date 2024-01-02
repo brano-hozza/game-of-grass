@@ -23,6 +23,14 @@ pub enum TileType {
     Chest,
 }
 
+const TILE_WEIGHTS: [(TileType, f32); 5] = [
+    (TileType::Grass, 0.9),
+    (TileType::Tree, 0.2),
+    (TileType::Water, 0.01),
+    (TileType::Rock, 0.1),
+    (TileType::Chest, 0.01),
+];
+
 impl std::fmt::Display for TileType {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
