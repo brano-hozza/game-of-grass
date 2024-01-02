@@ -84,3 +84,6 @@ impl Inventory {
         self.items.get(item_type)
     }
 }
+
+#[derive(Component)]
+pub struct InventoryUI;

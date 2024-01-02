@@ -37,7 +37,7 @@ pub fn spawn_player(mut commands: Commands, player_sprites: Res<PlayerSprites>) 
 
 pub fn despawn_player(mut commands: Commands, mut player_query: Query<Entity, With<Player>>) {
     if let Ok(player) = player_query.get_single_mut() {
-        commands.entity(player).despawn();
+        commands.entity(player).despawn_recursive();
     }
 }
 

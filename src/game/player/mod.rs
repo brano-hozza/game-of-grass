@@ -12,8 +12,6 @@ use crate::AppState;
 
 use self::resources::PlayerSprites;
 
-use super::SimulationState;
-
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
@@ -30,8 +28,7 @@ impl Plugin for PlayerPlugin {
                     try_place_item,
                 )
                     .chain()
-                    .run_if(in_state(AppState::Game))
-                    .run_if(in_state(SimulationState::Running)),
+                    .run_if(in_state(AppState::Game)),
             );
     }
 }

@@ -1,4 +1,3 @@
-pub mod components;
 mod systems;
 
 pub mod game;
@@ -18,11 +17,7 @@ fn main() {
         .add_systems(Startup, spawn_camera)
         .add_systems(
             Update,
-            (
-                transition_to_game_state,
-                transition_to_main_menu_state,
-                mouse_scroll,
-            ),
+            (transition_to_game_state, transition_to_main_menu_state),
         )
         .run();
 }
@@ -32,7 +27,6 @@ pub enum AppState {
     #[default]
     MainMenu,
     Game,
-    GameOver,
 }
 
 pub const VISIBLE_WIDTH: usize = 20; // This is the number of tiles visible on the x-axis.

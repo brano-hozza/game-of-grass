@@ -10,13 +10,13 @@ use bevy::{
 use crate::{game::player::components::Player, INVENTORY_WIDTH};
 
 use super::{
-    components::{Inventory, Item, ItemIndex},
+    components::{Inventory, InventoryUI, Item, ItemIndex},
     events::InventoryChangeEvent,
     resources::ItemSprites,
     ItemType,
 };
 
-pub fn create_inventory(
+pub fn spawn_inventory(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     item_sprites: Res<ItemSprites>,
@@ -24,15 +24,18 @@ pub fn create_inventory(
     let inventory = Inventory::default();
     let font = asset_server.load("fonts/FiraSans-Bold.ttf");
     // UI
-    let mut main_component = commands.spawn(NodeBundle {
-        style: Style {
-            width: Val::Percent(100.0),
-            height: Val::Percent(100.0),
-            justify_content: JustifyContent::FlexEnd,
+    let mut main_component = commands.spawn((
+        NodeBundle {
+            style: Style {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                justify_content: JustifyContent::FlexEnd,
+                ..default()
+            },
             ..default()
         },
-        ..default()
-    });
+        InventoryUI {},
+    ));
     main_component.with_children(|parent| {
         // Right vertical fill (border)
         let mut panel = parent.spawn(NodeBundle {
@@ -180,6 +183,15 @@ pub fn create_inventory(
             });
         });
     });
+}
+
+pub fn despawn_inventory(
+    mut commands: Commands,
+    mut inventory_query: Query<Entity, With<InventoryUI>>,
+) {
+    if let Ok(inventory) = inventory_query.get_single_mut() {
+        commands.entity(inventory).despawn_recursive();
+    }
 }
 
 pub fn update_inventory_ui(
