@@ -15,7 +15,7 @@ pub mod events;
 pub mod resources;
 pub mod systems;
 
-#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
 pub enum ItemType {
     None,
     Wood,

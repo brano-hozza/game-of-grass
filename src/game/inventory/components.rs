@@ -22,44 +22,9 @@ pub struct Inventory {
 
 impl Default for Inventory {
     fn default() -> Self {
-        let mut items = HashMap::<ItemType, Item>::new();
-        items.insert(
-            ItemType::Wood,
-            Item {
-                item_type: ItemType::Wood,
-                amount: 0,
-            },
-        );
-
-        items.insert(
-            ItemType::Stone,
-            Item {
-                item_type: ItemType::Stone,
-                amount: 0,
-            },
-        );
-
-        items.insert(
-            ItemType::Gold,
-            Item {
-                item_type: ItemType::Gold,
-                amount: 0,
-            },
-        );
-
         Inventory {
-            items,
-            item_placement: vec![
-                ItemType::Wood,
-                ItemType::Stone,
-                ItemType::Gold,
-                ItemType::None,
-                ItemType::None,
-                ItemType::None,
-                ItemType::None,
-                ItemType::None,
-                ItemType::None,
-            ],
+            items: HashMap::<ItemType, Item>::new(),
+            item_placement: vec![],
             selected_index: 0,
         }
     }
@@ -70,13 +35,19 @@ impl Inventory {
         if let Some(existing_item) = self.items.get_mut(&item.item_type) {
             existing_item.amount += item.amount;
         } else {
-            self.items.insert(item.item_type.clone(), item);
+            self.items.insert(item.item_type.clone(), item.clone());
+            self.item_placement.push(item.item_type.clone());
         }
     }
 
     pub fn remove_item(&mut self, item_type: &ItemType, amount: usize) {
         if let Some(existing_item) = self.items.get_mut(item_type) {
             existing_item.amount -= amount;
+
+            if existing_item.amount == 0 {
+                self.items.remove(item_type);
+                self.item_placement.retain(|item| item != item_type);
+            }
         }
     }
 

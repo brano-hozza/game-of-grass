@@ -23,7 +23,6 @@ pub fn spawn_player(mut commands: Commands, player_sprites: Res<PlayerSprites>) 
             Player {},
             Rotation::Down,
             Point { x: 1, y: 1 },
-            Inventory::default(),
         ))
         .with_children(|parent| {
             // Display selected item in hand
@@ -165,14 +164,15 @@ pub fn confine_player_movement(
 
 pub fn player_breaking(
     keyboard_input: Res<Input<KeyCode>>,
-    mut player_query: Query<(&Point, &Rotation, &mut Inventory), With<Player>>,
+    player_query: Query<(&Point, &Rotation), With<Player>>,
+    mut inventory_query: Query<&mut Inventory>,
     mut tile_query: Query<(&mut Handle<Image>, &Point), With<Tile>>,
     mut map_query: Query<&mut TileMap>,
     mut ev_new_item: EventWriter<InventoryChangeEvent>,
     tile_sprites: Res<TileTextures>,
 ) {
     if keyboard_input.pressed(KeyCode::E) {
-        if let Ok((player_coordinates, rotation, mut inventory)) = player_query.get_single_mut() {
+        if let Ok((player_coordinates, rotation)) = player_query.get_single() {
             if let Ok(mut game_map) = map_query.get_single_mut() {
                 let target = player_coordinates + rotation;
                 if let Some(tile) = game_map.get_tile_mut(&target) {
@@ -185,6 +185,8 @@ pub fn player_breaking(
                         .find(|(_, point)| target == **point)
                         .unwrap()
                         .0;
+
+                    let mut inventory = inventory_query.get_single_mut().expect("No inventory");
 
                     let item_type: ItemType = tile.clone().into();
                     inventory.add_item(Item {
@@ -209,14 +211,17 @@ pub fn player_breaking(
 
 pub fn try_place_item(
     keyboard_input: Res<Input<KeyCode>>,
-    mut player_query: Query<(&Point, &Rotation, &mut Inventory), With<Player>>,
+    player_query: Query<(&Point, &Rotation), With<Player>>,
+
+    mut inventory_query: Query<&mut Inventory>,
     mut tile_query: Query<(&mut Handle<Image>, &Point), With<Tile>>,
     mut map_query: Query<&mut TileMap>,
     mut ev_invent_change: EventWriter<InventoryChangeEvent>,
     tile_textures: Res<TileTextures>,
 ) {
     if keyboard_input.pressed(KeyCode::Q) {
-        if let Ok((player_coordinates, rotation, mut inventory)) = player_query.get_single_mut() {
+        if let Ok((player_coordinates, rotation)) = player_query.get_single() {
+            let mut inventory = inventory_query.get_single_mut().expect("No inventory");
             let item_type = inventory.item_placement[inventory.selected_index].clone();
             if item_type == ItemType::None || item_type == ItemType::Gold {
                 return;
