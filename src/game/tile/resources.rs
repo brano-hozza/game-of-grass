@@ -5,7 +5,7 @@ use bevy::prelude::*;
 use super::TileType;
 
 #[derive(Resource)]
-pub struct TileSprites {
+pub struct TileTextures {
     pub grass: Handle<Image>,
     pub tree: Handle<Image>,
     pub water: Handle<Image>,
@@ -13,10 +13,10 @@ pub struct TileSprites {
     pub chest: Handle<Image>,
 }
 
-impl FromWorld for TileSprites {
+impl FromWorld for TileTextures {
     fn from_world(world: &mut World) -> Self {
         let asset_server = world.resource::<AssetServer>();
-        TileSprites {
+        TileTextures {
             grass: asset_server.load("sprites/tiles/grass.png"),
             tree: asset_server.load("sprites/tiles/tree.png"),
             water: asset_server.load("sprites/tiles/water.png"),
@@ -26,7 +26,7 @@ impl FromWorld for TileSprites {
     }
 }
 
-impl Index<&TileType> for TileSprites {
+impl Index<&TileType> for TileTextures {
     type Output = Handle<Image>;
 
     fn index(&self, tile_type: &TileType) -> &Self::Output {

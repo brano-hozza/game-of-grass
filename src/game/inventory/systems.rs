@@ -3,15 +3,17 @@ use bevy::{
         accesskit::{NodeBuilder, Role},
         AccessibilityNode,
     },
+    input::mouse::{MouseScrollUnit, MouseWheel},
     prelude::*,
 };
 
-use crate::INVENTORY_WIDTH;
+use crate::{game::player::components::Player, INVENTORY_WIDTH};
 
 use super::{
-    components::{Inventory, Item},
-    events::NewItemEvent,
+    components::{Inventory, Item, ItemIndex},
+    events::InventoryChangeEvent,
     resources::ItemSprites,
+    ItemType,
 };
 
 pub fn create_inventory(
@@ -91,46 +93,88 @@ pub fn create_inventory(
                 ));
                 inventory_box.with_children(|parent| {
                     // List items
-                    for (item_type, item) in inventory.items.iter() {
-                        let mut item_box = parent.spawn((
-                            NodeBundle {
-                                style: Style {
-                                    flex_direction: FlexDirection::Column,
-                                    align_items: AlignItems::FlexStart,
-                                    justify_content: JustifyContent::FlexEnd,
-                                    border: UiRect::all(Val::Px(2.)),
-                                    width: Val::Px(50.),
-                                    height: Val::Px(50.),
-                                    padding: UiRect {
-                                        left: Val::Px(5.),
-                                        right: Val::Px(5.),
-                                        top: Val::Px(2.),
-                                        bottom: Val::Px(0.),
-                                    },
+                    for (index, item_type) in inventory.item_placement.iter().enumerate() {
+                        let mut item_box = parent.spawn((NodeBundle {
+                            style: Style {
+                                flex_direction: FlexDirection::Column,
+                                align_items: AlignItems::Center,
+                                justify_content: JustifyContent::FlexEnd,
+                                border: UiRect::all(Val::Px(2.)),
+                                width: Val::Px(60.),
+                                height: Val::Px(60.),
+                                padding: UiRect {
+                                    top: Val::Px(2.),
+                                    bottom: Val::Px(0.),
                                     ..default()
                                 },
-                                border_color: Color::rgb(0.5, 0.5, 0.5).into(),
-                                background_color: Color::WHITE.into(),
-
                                 ..default()
                             },
-                            UiImage::new(item_sprites[item_type].clone()),
-                        ));
+                            border_color: Color::rgb(0.5, 0.5, 0.5).into(),
+                            background_color: Color::WHITE.into(),
+
+                            ..default()
+                        },));
                         item_box.with_children(|parent| {
                             parent.spawn((
-                                TextBundle::from_section(
-                                    format!("{} = {}", item_type, item.amount),
-                                    TextStyle {
-                                        font: font.clone(),
-                                        font_size: 10.,
-                                        color: Color::BLACK,
+                                NodeBundle {
+                                    style: Style {
+                                        width: Val::Px(50.),
+                                        height: Val::Px(60.),
                                         ..default()
                                     },
-                                ),
-                                item.clone(),
-                                Label,
+                                    background_color: Color::WHITE.into(),
+                                    ..default()
+                                },
+                                UiImage::new(item_sprites[item_type].clone()),
                             ));
                         });
+
+                        if let Some(item) = inventory.items.get(item_type) {
+                            item_box.with_children(|parent| {
+                                parent.spawn((
+                                    TextBundle::from_section(
+                                        format!("{} = {}", item_type, item.amount),
+                                        TextStyle {
+                                            font: font.clone(),
+                                            font_size: 10.,
+                                            color: if inventory.selected_index == index {
+                                                Color::RED
+                                            } else {
+                                                Color::BLACK
+                                            },
+                                            ..default()
+                                        },
+                                    ),
+                                    item.clone(),
+                                    ItemIndex(index),
+                                    Label,
+                                ));
+                            });
+                        } else {
+                            item_box.with_children(|parent| {
+                                parent.spawn((
+                                    TextBundle::from_section(
+                                        format!("Empty"),
+                                        TextStyle {
+                                            font: font.clone(),
+                                            font_size: 10.,
+                                            color: if inventory.selected_index == index {
+                                                Color::RED
+                                            } else {
+                                                Color::BLACK
+                                            },
+                                            ..default()
+                                        },
+                                    ),
+                                    ItemIndex(index),
+                                    Item {
+                                        item_type: *item_type,
+                                        amount: 0,
+                                    },
+                                    Label,
+                                ));
+                            });
+                        }
                     }
                 });
             });
@@ -139,15 +183,128 @@ pub fn create_inventory(
 }
 
 pub fn update_inventory_ui(
-    mut ev_new_item: EventReader<NewItemEvent>,
-    mut inventory_query: Query<(&mut Item, &mut Text)>,
+    mut ev_new_item: EventReader<InventoryChangeEvent>,
+    mut items_query: Query<(&mut Item, &mut Text)>,
+    player_query: Query<(&Inventory, &Children), With<Player>>,
+    mut player_children_query: Query<(&mut Handle<Image>, &mut Sprite)>,
+    item_sprites: Res<ItemSprites>,
 ) {
     for ev in ev_new_item.read() {
-        if let Some((_, mut text)) = inventory_query
+        if let Some((_, mut text)) = items_query
             .iter_mut()
             .find(|(i, _)| i.item_type == ev.item_type)
         {
             text.sections[0].value = format!("{} = {}", ev.item_type, ev.amount);
+        }
+
+        // Display in hand, empty hand if 0 amount
+
+        if let Ok((inventory, player_children)) = player_query.get_single() {
+            if inventory.item_placement[inventory.selected_index] != ev.item_type {
+                continue;
+            }
+            for child in player_children.iter() {
+                if let Ok((mut texture, mut sprite)) = player_children_query.get_mut(*child) {
+                    *texture = match ev.amount {
+                        0 => Handle::default(),
+                        _ => item_sprites[&ev.item_type].clone(),
+                    };
+                    *sprite = match ev.amount {
+                        0 => Sprite::default(),
+                        _ => Sprite {
+                            custom_size: Some(Vec2::new(8., 8.)),
+                            ..default()
+                        },
+                    }
+                }
+            }
+        }
+    }
+}
+
+pub fn player_item_select(
+    mut mouse_input: EventReader<MouseWheel>,
+    mut player_query: Query<(&mut Inventory, &Children), With<Player>>,
+    mut player_children_query: Query<(&mut Handle<Image>, &mut Sprite)>,
+    mut items_query: Query<(&mut ItemIndex, &mut Text)>,
+    item_sprites: Res<ItemSprites>,
+) {
+    if let Ok((mut inventory, player_children)) = player_query.get_single_mut() {
+        for ev in mouse_input.read() {
+            match ev.unit {
+                MouseScrollUnit::Pixel => {
+                    if ev.y < 0.0 {
+                        if inventory.selected_index + 1 > 8 {
+                            inventory.selected_index = 0;
+                        } else {
+                            inventory.selected_index += 1;
+                        }
+                    } else if ev.y > 0.0 {
+                        if (inventory.selected_index as i8) - 1 < 0 {
+                            inventory.selected_index = 8;
+                        } else {
+                            inventory.selected_index -= 1;
+                        }
+                    }
+                }
+                MouseScrollUnit::Line => {
+                    if ev.y < 0.0 {
+                        if inventory.selected_index + 1 > 8 {
+                            inventory.selected_index = 0;
+                        } else {
+                            inventory.selected_index += 1;
+                        }
+                    } else if ev.y > 0.0 {
+                        if (inventory.selected_index as i8) - 1 < 0 {
+                            inventory.selected_index = 8;
+                        } else {
+                            inventory.selected_index -= 1;
+                        }
+                    }
+                }
+            }
+
+            // Display in UI
+
+            for (_, mut text) in items_query.iter_mut() {
+                text.sections[0].style.color = Color::BLACK;
+            }
+            let item_type = inventory.item_placement[inventory.selected_index];
+            let amount = if item_type == ItemType::None {
+                0
+            } else {
+                inventory.get_item(&item_type).unwrap().amount
+            };
+
+            if let Some((_, mut text)) = items_query
+                .iter_mut()
+                .find(|(i, _)| i.0 == inventory.selected_index)
+            {
+                text.sections[0].style.color = Color::RED;
+                if let Some(item) = inventory.items.get(&item_type) {
+                    text.sections[0].value = format!("{} = {}", item_type, item.amount);
+                } else {
+                    text.sections[0].value = format!("Empty");
+                }
+            }
+
+            for child in player_children.iter() {
+                if let Ok((mut texture, mut sprite)) = player_children_query.get_mut(*child) {
+                    *texture = if amount == 0 {
+                        Handle::default()
+                    } else {
+                        item_sprites[&item_type].clone()
+                    };
+                    *sprite = if amount == 0 {
+                        Sprite::default()
+                    } else {
+                        Sprite {
+                            custom_size: Some(Vec2::new(8., 8.)),
+                            ..default()
+                        }
+                    }
+                }
+            }
         }
     }
 }

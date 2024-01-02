@@ -10,7 +10,9 @@ use systems::*;
 
 use crate::AppState;
 
-use self::resources::TileSprites;
+use self::resources::TileTextures;
+
+use super::inventory::ItemType;
 
 #[derive(Clone, Copy, PartialEq)]
 pub enum TileType {
@@ -33,11 +35,22 @@ impl std::fmt::Display for TileType {
     }
 }
 
+impl Into<ItemType> for TileType {
+    fn into(self) -> ItemType {
+        match self {
+            TileType::Tree => ItemType::Wood,
+            TileType::Rock => ItemType::Stone,
+            TileType::Chest => ItemType::Gold,
+            _ => unreachable!(),
+        }
+    }
+}
+
 pub struct TilePlugin;
 
 impl Plugin for TilePlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<TileSprites>()
+        app.init_resource::<TileTextures>()
             .add_systems(OnEnter(AppState::Game), spawn_tiles)
             // .add_systems(Update, update_tiles)
             .add_systems(OnExit(AppState::Game), despawn_tiles);

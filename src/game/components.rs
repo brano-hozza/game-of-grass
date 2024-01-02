@@ -30,6 +30,25 @@ impl std::ops::Add<Vec3> for Point {
     }
 }
 
+impl std::ops::AddAssign<Vec3> for Point {
+    fn add_assign(&mut self, rhs: Vec3) {
+        self.x = (self.x as f32 + rhs.x) as i32;
+        self.y = (self.y as f32 + rhs.y) as i32;
+    }
+}
+
+impl std::ops::Add<&Rotation> for &Point {
+    type Output = Point;
+    fn add(self, rhs: &Rotation) -> Self::Output {
+        match rhs {
+            &Rotation::Up => Point::new(self.x, self.y + 1),
+            &Rotation::Down => Point::new(self.x, self.y - 1),
+            &Rotation::Left => Point::new(self.x - 1, self.y),
+            &Rotation::Right => Point::new(self.x + 1, self.y),
+        }
+    }
+}
+
 impl PartialEq<Vec3> for Point {
     fn eq(&self, rhs: &Vec3) -> bool {
         self.x == rhs.x as i32 && self.y == rhs.y as i32
@@ -53,7 +72,13 @@ impl std::ops::Add<Point> for Vec3 {
     }
 }
 
-#[derive(Component)]
+impl std::fmt::Display for Point {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "[x: {}, y: {}]", self.x, self.y)
+    }
+}
+
+#[derive(Component, PartialEq, Eq)]
 pub enum Rotation {
     Up,
     Down,

@@ -1,7 +1,7 @@
 use super::components::Tile;
 use super::components::TileMap;
 use super::components::Tiles;
-use super::resources::TileSprites;
+use super::resources::TileTextures;
 use super::TileType;
 use crate::game::components::Point;
 use crate::{TILE_SIZE, VISIBLE_HEIGHT, VISIBLE_WIDTH};
@@ -9,7 +9,7 @@ use bevy::prelude::*;
 
 pub fn spawn_tiles(
     mut commands: Commands,
-    tile_sprites: Res<TileSprites>,
+    tile_sprites: Res<TileTextures>,
     // asset_server: Res<AssetServer>,
 ) {
     let mut game_map = TileMap {
