@@ -1,4 +1,8 @@
 use bevy::prelude::*;
+use rand::{
+    distributions::{Distribution, Standard},
+    Rng,
+};
 
 #[derive(Component, Copy, Clone)]
 pub struct Point {
@@ -78,10 +82,21 @@ impl std::fmt::Display for Point {
     }
 }
 
-#[derive(Component, PartialEq, Eq)]
+#[derive(Component, PartialEq, Eq, Clone)]
 pub enum Rotation {
     Up,
     Down,
     Left,
     Right,
+}
+
+impl Distribution<Rotation> for Standard {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Rotation {
+        match rng.gen_range(0..4) {
+            0 => Rotation::Up,
+            1 => Rotation::Down,
+            2 => Rotation::Left,
+            _ => Rotation::Right,
+        }
+    }
 }

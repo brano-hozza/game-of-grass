@@ -35,13 +35,6 @@ pub fn spawn_tiles(
     game_map.set_tile(&Point::new(4, 4), TileType::Chest);
 
     // Render tile map
-    println!("Rendering tile map");
-    // let text_style = TextStyle {
-    //     font: asset_server.load("fonts/FiraSans-Bold.ttf"),
-    //     font_size: 10.0,
-    //     color: Color::BLACK,
-    // };
-
     let game_width = game_map.width;
     let game_height = game_map.height;
     for x in 0..game_width {
@@ -60,25 +53,10 @@ pub fn spawn_tiles(
                 Point::new(x as i32, y as i32),
                 Tile {},
             ));
-            // .with_children(|parent| {
-            //     parent.spawn((Text2dBundle {
-            //         text: Text::from_section(
-            //             (x + y * game_width).to_string(),
-            //             text_style.clone(),
-            //         ),
-            //         ..default()
-            //     },));
-            // });
         }
     }
     commands.spawn((game_map, Tiles {}));
 }
-
-// pub fn update_tiles(mut query: Query<&mut TileMap, With<Tiles>>, tile_sprites: Res<TileSprites>) {
-//     for (mut tile) in query.single_mut().unwrap().map.iter_mut() {
-//         *sprite = tile_sprites[tile.].clone();
-//     }
-// }
 
 pub fn despawn_tiles(mut commands: Commands, query: Query<Entity, With<Tile>>) {
     for entity in query.iter() {

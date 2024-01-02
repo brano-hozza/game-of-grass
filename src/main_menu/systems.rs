@@ -48,7 +48,6 @@ pub fn spawn_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 
 pub fn despawn_main_menu(mut commands: Commands, mut menu_query: Query<Entity, With<MainMenu>>) {
-    println!("despawning main menu");
     if let Ok(menu) = menu_query.get_single_mut() {
         commands.entity(menu).despawn_recursive();
     }
