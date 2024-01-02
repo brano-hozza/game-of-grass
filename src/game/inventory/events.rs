@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use super::components::ItemType;
+use super::ItemType;
 
 #[derive(Event)]
 pub struct NewItemEvent {

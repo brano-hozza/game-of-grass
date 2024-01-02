@@ -5,41 +5,20 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "type": "lldb",
+            "name": "(Windows) Launch",
+            "type": "cppvsdbg",
             "request": "launch",
-            "name": "Debug executable 'game'",
-            "cargo": {
-                "args": [
-                    "build",
-                    "--bin=game",
-                    "--package=game"
-                ],
-                "filter": {
-                    "name": "game",
-                    "kind": "bin"
-                }
-            },
+            "program": "${workspaceFolder}/target/debug/game.exe", // Adjust exe name appropriately on your machine
             "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug unit tests in executable 'game'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--bin=game",
-                    "--package=game"
-                ],
-                "filter": {
-                    "name": "game",
-                    "kind": "bin"
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "console": "internalConsole",
+            "environment": [
+                {
+                    "name": "PATH",
+                    "value": "%USERPROFILE%/.rustup/toolchains/nightly-x86_64-pc-windows-msvc/bin;${workspaceFolder}/target/debug/deps;%PATH%"
                 }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-    ]
+            ]
+        }
+    ],
 }

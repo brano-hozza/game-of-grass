@@ -11,104 +11,131 @@ use crate::INVENTORY_WIDTH;
 use super::{
     components::{Inventory, Item},
     events::NewItemEvent,
+    resources::ItemSprites,
 };
 
-pub fn create_inventory(mut commands: Commands, asset_server: Res<AssetServer>) {
+pub fn create_inventory(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    item_sprites: Res<ItemSprites>,
+) {
     let inventory = Inventory::default();
+    let font = asset_server.load("fonts/FiraSans-Bold.ttf");
     // UI
-    commands
-        .spawn(NodeBundle {
+    let mut main_component = commands.spawn(NodeBundle {
+        style: Style {
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            justify_content: JustifyContent::FlexEnd,
+            ..default()
+        },
+        ..default()
+    });
+    main_component.with_children(|parent| {
+        // Right vertical fill (border)
+        let mut panel = parent.spawn(NodeBundle {
             style: Style {
-                width: Val::Percent(100.0),
-                height: Val::Percent(100.0),
-                justify_content: JustifyContent::FlexEnd,
+                width: Val::Px(INVENTORY_WIDTH as f32),
+                border: UiRect::all(Val::Px(2.)),
                 ..default()
             },
+            background_color: Color::rgb(0.65, 0.65, 0.65).into(),
             ..default()
-        })
-        .with_children(|parent| {
-            // left vertical fill (border)
-            parent
-                .spawn(NodeBundle {
-                    style: Style {
-                        width: Val::Px(INVENTORY_WIDTH as f32),
-                        border: UiRect::all(Val::Px(2.)),
+        });
+        panel.with_children(|parent| {
+            // Right vertical fill (content)
+            let mut panel_content = parent.spawn(NodeBundle {
+                style: Style {
+                    width: Val::Percent(100.),
+                    flex_direction: FlexDirection::Column,
+                    border: UiRect::all(Val::Px(2.)),
+                    align_items: AlignItems::Start,
+                    padding: UiRect::all(Val::Px(5.)),
+                    ..default()
+                },
+                background_color: Color::rgb(0.15, 0.15, 0.15).into(),
+                ..default()
+            });
+            panel_content.with_children(|parent| {
+                // Title
+                parent.spawn((
+                    TextBundle::from_section(
+                        "Inventory",
+                        TextStyle {
+                            font: font.clone(),
+                            font_size: 30.0,
+                            ..default()
+                        },
+                    )
+                    .with_style(Style {
+                        margin: UiRect::all(Val::Px(5.)),
+                        ..default()
+                    }),
+                    Label,
+                ));
+
+                // Inventory
+                let mut inventory_box = parent.spawn((
+                    NodeBundle {
+                        style: Style {
+                            flex_direction: FlexDirection::Column,
+                            align_items: AlignItems::FlexStart,
+                            border: UiRect::all(Val::Px(2.)),
+                            ..default()
+                        },
+                        border_color: Color::rgb(0.5, 0.5, 0.5).into(),
                         ..default()
                     },
-                    background_color: Color::rgb(0.65, 0.65, 0.65).into(),
-                    ..default()
-                })
-                .with_children(|parent| {
-                    // left vertical fill (content)
-                    parent
-                        .spawn(NodeBundle {
-                            style: Style {
-                                width: Val::Percent(100.),
-                                flex_direction: FlexDirection::Column,
-                                align_items: AlignItems::Start,
-                                padding: UiRect::all(Val::Px(5.)),
+                    inventory.clone(),
+                    AccessibilityNode(NodeBuilder::new(Role::List)),
+                ));
+                inventory_box.with_children(|parent| {
+                    // List items
+                    for (item_type, item) in inventory.items.iter() {
+                        let mut item_box = parent.spawn((
+                            NodeBundle {
+                                style: Style {
+                                    flex_direction: FlexDirection::Column,
+                                    align_items: AlignItems::FlexStart,
+                                    justify_content: JustifyContent::FlexEnd,
+                                    border: UiRect::all(Val::Px(2.)),
+                                    width: Val::Px(50.),
+                                    height: Val::Px(50.),
+                                    padding: UiRect {
+                                        left: Val::Px(5.),
+                                        right: Val::Px(5.),
+                                        top: Val::Px(2.),
+                                        bottom: Val::Px(0.),
+                                    },
+                                    ..default()
+                                },
+                                border_color: Color::rgb(0.5, 0.5, 0.5).into(),
+                                background_color: Color::WHITE.into(),
+
                                 ..default()
                             },
-                            background_color: Color::rgb(0.15, 0.15, 0.15).into(),
-                            ..default()
-                        })
-                        .with_children(|parent| {
-                            // text
+                            UiImage::new(item_sprites[item_type].clone()),
+                        ));
+                        item_box.with_children(|parent| {
                             parent.spawn((
                                 TextBundle::from_section(
-                                    "Inventory",
+                                    format!("{} = {}", item_type, item.amount),
                                     TextStyle {
-                                        font: asset_server.load("fonts/FiraSans-Bold.ttf"),
-                                        font_size: 30.0,
+                                        font: font.clone(),
+                                        font_size: 10.,
+                                        color: Color::BLACK,
                                         ..default()
                                     },
-                                )
-                                .with_style(Style {
-                                    margin: UiRect::all(Val::Px(5.)),
-                                    ..default()
-                                }),
-                                // Because this is a distinct label widget and
-                                // not button/list item text, this is necessary
-                                // for accessibility to treat the text accordingly.
+                                ),
+                                item.clone(),
                                 Label,
                             ));
-
-                            // Moving panel
-                            parent
-                                .spawn((
-                                    NodeBundle {
-                                        style: Style {
-                                            flex_direction: FlexDirection::Column,
-                                            align_items: AlignItems::FlexStart,
-                                            ..default()
-                                        },
-                                        ..default()
-                                    },
-                                    inventory.clone(),
-                                    AccessibilityNode(NodeBuilder::new(Role::List)),
-                                ))
-                                .with_children(|parent| {
-                                    // List items
-                                    for (item_type, item) in inventory.clone().items.iter() {
-                                        parent.spawn((
-                                            TextBundle::from_section(
-                                                format!("{} = {}", item_type, item.amount),
-                                                TextStyle {
-                                                    font: asset_server
-                                                        .load("fonts/FiraSans-Bold.ttf"),
-                                                    font_size: 20.,
-                                                    ..default()
-                                                },
-                                            ),
-                                            item.clone(),
-                                            Label,
-                                            AccessibilityNode(NodeBuilder::new(Role::ListItem)),
-                                        ));
-                                    }
-                                });
                         });
+                    }
                 });
+            });
         });
+    });
 }
 
 pub fn update_inventory_ui(

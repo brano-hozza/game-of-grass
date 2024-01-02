@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 mod bundles;
 pub mod components;
+mod events;
 mod resources;
 mod systems;
 
@@ -22,7 +23,12 @@ impl Plugin for PlayerPlugin {
             .add_systems(OnExit(AppState::Game), despawn_player)
             .add_systems(
                 Update,
-                (player_movement, confine_player_movement, player_breaking)
+                (
+                    player_movement,
+                    confine_player_movement,
+                    player_breaking,
+                    player_item_select,
+                )
                     .chain()
                     .run_if(in_state(AppState::Game))
                     .run_if(in_state(SimulationState::Running)),

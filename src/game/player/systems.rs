@@ -4,25 +4,63 @@ use bevy::window::PrimaryWindow;
 use super::components::Player;
 use super::resources::PlayerSprites;
 use crate::game::components::{Point, Rotation};
-use crate::game::inventory::components::{Inventory, Item, ItemType};
+use crate::game::inventory::components::{Inventory, Item};
 use crate::game::inventory::events::NewItemEvent;
+use crate::game::inventory::ItemType;
 use crate::game::tile::components::{Tile, TileMap};
 use crate::game::tile::resources::TileSprites;
 use crate::game::tile::TileType;
 use crate::TILE_SIZE;
 
 pub fn spawn_player(mut commands: Commands, player_sprites: Res<PlayerSprites>) {
-    commands.spawn((
-        SpriteBundle {
-            transform: Transform::from_xyz(0.0, 0.0, 0.1),
-            texture: player_sprites.down.clone(),
-            ..default()
-        },
-        Player {},
-        Rotation::Down,
-        Point { x: 0, y: 0 },
-        Inventory::default(),
-    ));
+    commands
+        .spawn((
+            SpriteBundle {
+                transform: Transform::from_xyz(0.0, 0.0, 0.1),
+                texture: player_sprites.down.clone(),
+                ..default()
+            },
+            Player {},
+            Rotation::Down,
+            Point { x: 0, y: 0 },
+            Inventory::default(),
+        ))
+        .with_children(|parent| {
+            // Display selected item in hand
+            parent.spawn(SpriteBundle {
+                transform: Transform::from_xyz(0.0, 0.0, 0.0),
+                ..default()
+            });
+        });
+}
+
+pub fn player_item_select(
+    keyboard_input: Res<Input<KeyCode>>,
+    mut player_query: Query<(&mut Inventory, &Children), With<Player>>,
+    mut children_query: Query<&mut Handle<Image>>,
+    asset_server: Res<AssetServer>,
+) {
+    if let Ok((mut inventory, children)) = player_query.get_single_mut() {
+        if let Some(_selected_item) = inventory.selected_item.clone() {
+            if keyboard_input.just_pressed(KeyCode::O) {
+                inventory.selected_item = None;
+                for child in children.iter() {
+                    if let Ok(mut item_sprite) = children_query.get_mut(*child) {
+                        *item_sprite = Handle::default();
+                    }
+                }
+            }
+        } else {
+            if keyboard_input.just_pressed(KeyCode::P) {
+                inventory.selected_item = Some(ItemType::Wood);
+                for child in children.iter() {
+                    if let Ok(mut item_sprite) = children_query.get_mut(*child) {
+                        *item_sprite = asset_server.load("sprites/tiles/wood.png");
+                    }
+                }
+            }
+        }
+    }
 }
 
 pub fn player_movement(

@@ -2,22 +2,7 @@ use std::collections::HashMap;
 
 use bevy::prelude::*;
 
-#[derive(PartialEq, Eq, Hash, Clone)]
-pub enum ItemType {
-    Wood,
-    Stone,
-    Gold,
-}
-
-impl std::fmt::Display for ItemType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ItemType::Wood => write!(f, "Wood"),
-            ItemType::Stone => write!(f, "Stone"),
-            ItemType::Gold => write!(f, "Gold"),
-        }
-    }
-}
+use super::ItemType;
 
 #[derive(Clone, Component)]
 pub struct Item {
@@ -28,6 +13,7 @@ pub struct Item {
 #[derive(Component, Clone)]
 pub struct Inventory {
     pub items: HashMap<ItemType, Item>,
+    pub selected_item: Option<ItemType>,
 }
 
 impl Default for Inventory {
@@ -57,7 +43,10 @@ impl Default for Inventory {
             },
         );
 
-        Inventory { items }
+        Inventory {
+            items,
+            selected_item: None,
+        }
     }
 }
 
