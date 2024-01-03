@@ -63,23 +63,24 @@ pub fn rotate_player(
     mut player_query: Query<(&mut Rotation, &Transform, &mut Handle<Image>), With<Player>>,
     player_sprites: Res<PlayerSprites>,
 ) {
-    if let Ok((mut rotation, transform, mut sprite)) = player_query.get_single_mut() {
-        for event in cursor_evr.read() {
-            println!("Cursor moved: {:?}", event.position);
-            println!("Player position: {:?}", transform.local_x());
-            if transform.translation.x < event.position.x {
-                *rotation = Rotation::Right;
-                *sprite = player_sprites.right.clone();
-            } else if transform.translation.x > event.position.x {
-                *rotation = Rotation::Left;
-                *sprite = player_sprites.left.clone();
-            } else if transform.translation.y < event.position.y {
-                *rotation = Rotation::Up;
-                *sprite = player_sprites.up.clone();
-            } else if transform.translation.y > event.position.y {
-                *rotation = Rotation::Down;
-                *sprite = player_sprites.down.clone();
-            }
+    let (mut rotation, transform, mut sprite) =
+        player_query.get_single_mut().expect("Error: No player");
+
+    for event in cursor_evr.read() {
+        println!("Cursor moved: {:?}", event.position);
+        println!("Player position: {:?}", transform.local_x());
+        if transform.translation.x < event.position.x {
+            *rotation = Rotation::Right;
+            *sprite = player_sprites.right.clone();
+        } else if transform.translation.x > event.position.x {
+            *rotation = Rotation::Left;
+            *sprite = player_sprites.left.clone();
+        } else if transform.translation.y < event.position.y {
+            *rotation = Rotation::Up;
+            *sprite = player_sprites.up.clone();
+        } else if transform.translation.y > event.position.y {
+            *rotation = Rotation::Down;
+            *sprite = player_sprites.down.clone();
         }
     }
 }
@@ -98,61 +99,60 @@ pub fn player_movement(
     player_sprites: Res<PlayerSprites>,
     map_query: Query<&TileMap>,
 ) {
-    if let Ok((mut transform, mut sprite, mut rotation, mut coordinate)) =
-        player_query.get_single_mut()
-    {
-        if *rotation != Rotation::Left && moving_in_direction(&keyboard_input, &Rotation::Left) {
-            // println!("Player is moving left");
-            *sprite = player_sprites.left.clone();
-            *rotation = Rotation::Left;
-            return;
-        }
+    let (mut transform, mut sprite, mut rotation, mut coordinate) =
+        player_query.get_single_mut().expect("Error: No player");
 
-        if *rotation != Rotation::Right && moving_in_direction(&keyboard_input, &Rotation::Right) {
-            // println!("Player is moving right");
-            *sprite = player_sprites.right.clone();
-            *rotation = Rotation::Right;
-            return;
-        }
+    if *rotation != Rotation::Left && moving_in_direction(&keyboard_input, &Rotation::Left) {
+        // println!("Player is moving left");
+        *sprite = player_sprites.left.clone();
+        *rotation = Rotation::Left;
+        return;
+    }
 
-        if *rotation != Rotation::Up && moving_in_direction(&keyboard_input, &Rotation::Up) {
-            // println!("Player is moving up");
-            *sprite = player_sprites.up.clone();
-            *rotation = Rotation::Up;
-            return;
-        }
+    if *rotation != Rotation::Right && moving_in_direction(&keyboard_input, &Rotation::Right) {
+        // println!("Player is moving right");
+        *sprite = player_sprites.right.clone();
+        *rotation = Rotation::Right;
+        return;
+    }
 
-        if *rotation != Rotation::Down && moving_in_direction(&keyboard_input, &Rotation::Down) {
-            // println!("Player is moving down");
-            *sprite = player_sprites.down.clone();
-            *rotation = Rotation::Down;
-            return;
-        }
+    if *rotation != Rotation::Up && moving_in_direction(&keyboard_input, &Rotation::Up) {
+        // println!("Player is moving up");
+        *sprite = player_sprites.up.clone();
+        *rotation = Rotation::Up;
+        return;
+    }
 
-        let mut direction = Vec3::ZERO;
-        if moving_in_direction(&keyboard_input, &Rotation::Left) {
-            direction += Vec3::new(-1.0, 0.0, 0.0);
-        } else if moving_in_direction(&keyboard_input, &Rotation::Right) {
-            direction += Vec3::new(1.0, 0.0, 0.0);
-        } else if moving_in_direction(&keyboard_input, &Rotation::Up) {
-            direction += Vec3::new(0.0, 1.0, 0.0);
-        } else if moving_in_direction(&keyboard_input, &Rotation::Down) {
-            direction += Vec3::new(0.0, -1.0, 0.0);
-        }
+    if *rotation != Rotation::Down && moving_in_direction(&keyboard_input, &Rotation::Down) {
+        // println!("Player is moving down");
+        *sprite = player_sprites.down.clone();
+        *rotation = Rotation::Down;
+        return;
+    }
 
-        if direction.length() > 0.0 {
-            direction = direction.normalize();
-        }
+    let mut direction = Vec3::ZERO;
+    if moving_in_direction(&keyboard_input, &Rotation::Left) {
+        direction += Vec3::new(-1.0, 0.0, 0.0);
+    } else if moving_in_direction(&keyboard_input, &Rotation::Right) {
+        direction += Vec3::new(1.0, 0.0, 0.0);
+    } else if moving_in_direction(&keyboard_input, &Rotation::Up) {
+        direction += Vec3::new(0.0, 1.0, 0.0);
+    } else if moving_in_direction(&keyboard_input, &Rotation::Down) {
+        direction += Vec3::new(0.0, -1.0, 0.0);
+    }
 
-        let new_coordination = coordinate.clone() + direction;
+    if direction.length() > 0.0 {
+        direction = direction.normalize();
+    }
 
-        // Transform to tile cords
-        if let Ok(map) = map_query.get_single() {
-            if let Some(tile) = map.get_tile(&new_coordination) {
-                if tile == &TileType::Grass {
-                    *coordinate += direction;
-                    transform.translation += direction * TILE_SIZE;
-                }
+    let new_coordination = coordinate.clone() + direction;
+
+    // Transform to tile cords
+    if let Ok(map) = map_query.get_single() {
+        if let Some(tile) = map.get_tile(&new_coordination) {
+            if tile == &TileType::Grass {
+                *coordinate += direction;
+                transform.translation += direction * TILE_SIZE;
             }
         }
     }
@@ -162,7 +162,7 @@ pub fn confine_player_movement(
     mut player_query: Query<&mut Transform, With<Player>>,
     window_query: Query<&Window, With<PrimaryWindow>>,
 ) {
-    let mut player_transform = player_query.get_single_mut().expect("No player");
+    let mut player_transform = player_query.get_single_mut().expect("Error: No player");
     let window = window_query.get_single().unwrap();
 
     let x_min = 0.0;
@@ -198,39 +198,39 @@ pub fn player_breaking(
     tile_sprites: Res<TileTextures>,
 ) {
     if keyboard_input.pressed(KeyCode::E) {
-        if let Ok((player_coordinates, rotation)) = player_query.get_single() {
-            if let Ok(mut game_map) = map_query.get_single_mut() {
-                let target = player_coordinates + rotation;
-                if let Some(tile) = game_map.get_tile_mut(&target) {
-                    if tile == &TileType::Grass || tile == &TileType::Water {
-                        return;
-                    }
-
-                    let mut sprite = tile_query
-                        .iter_mut()
-                        .find(|(_, point)| target == **point)
-                        .unwrap()
-                        .0;
-
-                    let mut inventory = inventory_query.get_single_mut().expect("No inventory");
-
-                    let item_type: ItemType = tile.clone().into();
-                    inventory.add_item(Item {
-                        item_type,
-                        amount: 1,
-                    });
-
-                    let item = inventory.get_item(&item_type).unwrap();
-
-                    *tile = TileType::Grass;
-                    *sprite = tile_sprites[&TileType::Grass].clone();
-
-                    ev_new_item.send(InventoryChangeEvent {
-                        item_type,
-                        amount: item.amount,
-                    })
-                }
+        let (player_coordinates, rotation) = player_query.get_single().expect("Error: No player");
+        let mut game_map = map_query.get_single_mut().expect("Error: No map");
+        let target = player_coordinates + rotation;
+        if let Some(tile) = game_map.get_tile_mut(&target) {
+            if tile == &TileType::Grass || tile == &TileType::Water {
+                return;
             }
+
+            let mut sprite = tile_query
+                .iter_mut()
+                .find(|(_, point)| target == **point)
+                .unwrap()
+                .0;
+
+            let mut inventory = inventory_query
+                .get_single_mut()
+                .expect("Error: No inventory");
+
+            let item_type: ItemType = tile.clone().into();
+            inventory.add_item(Item {
+                item_type,
+                amount: 1,
+            });
+
+            let item = inventory.get_item(&item_type).unwrap();
+
+            *tile = TileType::Grass;
+            *sprite = tile_sprites[&TileType::Grass].clone();
+
+            ev_new_item.send(InventoryChangeEvent {
+                item_type,
+                amount: item.amount,
+            })
         }
     }
 }
@@ -246,8 +246,10 @@ pub fn try_place_item(
     tile_textures: Res<TileTextures>,
 ) {
     if keyboard_input.pressed(KeyCode::Q) {
-        let (player_coordinates, rotation) = player_query.get_single().expect("No player");
-        let mut inventory = inventory_query.get_single_mut().expect("No inventory");
+        let (player_coordinates, rotation) = player_query.get_single().expect("Error: No player");
+        let mut inventory = inventory_query
+            .get_single_mut()
+            .expect("Error: No inventory");
         let inv_size = inventory.item_placement.len();
         if inv_size == 0 {
             return;
@@ -257,10 +259,10 @@ pub fn try_place_item(
             return;
         }
 
-        let mut game_map = map_query.get_single_mut().expect("No map");
+        let mut game_map = map_query.get_single_mut().expect("Error: No map");
         let target = player_coordinates + rotation;
 
-        let tile = game_map.get_tile_mut(&target).expect("Missing tile");
+        let tile = game_map.get_tile_mut(&target).expect("Error: Missing tile");
         if tile != &TileType::Grass {
             return;
         }

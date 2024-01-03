@@ -113,7 +113,7 @@ pub fn update_inventory_ui(
     item_sprites: Res<ItemSprites>,
     asset_server: Res<AssetServer>,
 ) {
-    let (inventory_entity, inventory) = inventory_query.get_single().expect("No inventory");
+    let (inventory_entity, inventory) = inventory_query.get_single().expect("Error: No inventory");
     for _ev in ev_invent_change.read() {
         // Update UI - remove all children and re-add
         if let Ok(children) = inv_items_query.get_single() {
@@ -130,7 +130,7 @@ pub fn update_inventory_ui(
 
             let font = asset_server.load("fonts/FiraSans-Bold.ttf");
             for (index, item_type) in inventory.item_placement.iter().enumerate() {
-                let item = inventory.get_item(item_type).expect("Missing item");
+                let item = inventory.get_item(item_type).expect("Error: Missing item");
 
                 let mut item_box = parent.spawn(NodeBundle {
                     style: Style {
@@ -190,7 +190,9 @@ pub fn update_inventory_ui(
             }
         });
 
-        let player_children = player_query.get_single().expect("No player children");
+        let player_children = player_query
+            .get_single()
+            .expect("Error: No player children");
         for child in player_children.iter() {
             if let Ok((mut texture, mut sprite)) = player_children_query.get_mut(*child) {
                 // Display in hand, empty hand if 0 amount
@@ -219,7 +221,9 @@ pub fn player_item_select(
     mut inventory_query: Query<&mut Inventory>,
     item_sprites: Res<ItemSprites>,
 ) {
-    let mut inventory = inventory_query.get_single_mut().expect("No inventory");
+    let mut inventory = inventory_query
+        .get_single_mut()
+        .expect("Error: No inventory");
     let inv_size = inventory.item_placement.len();
     if inv_size == 0 {
         return;
