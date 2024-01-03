@@ -26,6 +26,7 @@ impl Plugin for PlayerPlugin {
                     confine_player_movement,
                     player_breaking,
                     try_place_item,
+                    rotate_player,
                 )
                     .chain()
                     .run_if(in_state(AppState::Game)),

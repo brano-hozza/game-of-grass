@@ -10,7 +10,7 @@ use bevy::{
 use crate::{game::player::components::Player, INVENTORY_WIDTH};
 
 use super::{
-    components::{Inventory, InventoryUI, Item, ItemIndex},
+    components::{Inventory, InventoryUI, ItemIndex},
     events::InventoryChangeEvent,
     resources::ItemSprites,
     ItemType,
@@ -106,30 +106,32 @@ pub fn despawn_inventory(
 pub fn update_inventory_ui(
     mut commands: Commands,
     mut ev_invent_change: EventReader<InventoryChangeEvent>,
-    mut items_query: Query<(&mut Item, &mut Text)>,
     player_query: Query<&Children, With<Player>>,
     mut player_children_query: Query<(&mut Handle<Image>, &mut Sprite)>,
     inventory_query: Query<(Entity, &Inventory)>,
+    inv_items_query: Query<&Children, With<Inventory>>,
     item_sprites: Res<ItemSprites>,
     asset_server: Res<AssetServer>,
 ) {
     let (inventory_entity, inventory) = inventory_query.get_single().expect("No inventory");
-    for ev in ev_invent_change.read() {
-        if let Some((_, mut text)) = items_query
-            .iter_mut()
-            .find(|(i, _)| i.item_type == ev.item_type)
-        {
-            text.sections[0].value = format!("{} = {}", ev.item_type, ev.amount);
-        } else {
-            println!("New item: {:?}", ev.item_type);
-            // Add new item to UI
-            // New index for item
-            let index = inventory.item_placement.len() - 1;
-            println!("New index: {}", index);
-            let mut inventory_ui = commands.entity(inventory_entity);
+    for _ev in ev_invent_change.read() {
+        // Update UI - remove all children and re-add
+        if let Ok(children) = inv_items_query.get_single() {
+            for child in children.iter() {
+                commands.entity(inventory_entity).remove_children(&[*child]);
+                commands.entity(*child).despawn_recursive();
+            }
+        }
 
-            inventory_ui.with_children(|parent| {
-                let font = asset_server.load("fonts/FiraSans-Bold.ttf");
+        let mut inventory_ui = commands.entity(inventory_entity);
+
+        inventory_ui.with_children(|parent| {
+            // Add items
+
+            let font = asset_server.load("fonts/FiraSans-Bold.ttf");
+            for (index, item_type) in inventory.item_placement.iter().enumerate() {
+                let item = inventory.get_item(item_type).expect("Missing item");
+
                 let mut item_box = parent.spawn(NodeBundle {
                     style: Style {
                         flex_direction: FlexDirection::Column,
@@ -162,14 +164,14 @@ pub fn update_inventory_ui(
                             background_color: Color::WHITE.into(),
                             ..default()
                         },
-                        UiImage::new(item_sprites[&ev.item_type].clone()),
+                        UiImage::new(item_sprites[item_type].clone()),
                     ));
                 });
 
                 item_box.with_children(|parent| {
                     parent.spawn((
                         TextBundle::from_section(
-                            format!("{} = {}", ev.item_type, ev.amount),
+                            format!("{} = {}", item_type, item.amount),
                             TextStyle {
                                 font: font.clone(),
                                 font_size: 10.,
@@ -182,38 +184,28 @@ pub fn update_inventory_ui(
                             },
                         ),
                         ItemIndex(index),
-                        Item {
-                            item_type: ev.item_type,
-                            amount: 0,
-                        },
                         Label,
                     ));
                 });
-            });
-        }
+            }
+        });
 
-        // Display in hand, empty hand if 0 amount
-        if let Ok(player_children) = player_query.get_single() {
-            if inventory.selected_index >= inventory.item_placement.len() {
-                continue;
-            }
-            if inventory.item_placement[inventory.selected_index] != ev.item_type {
-                continue;
-            }
-            for child in player_children.iter() {
-                if let Ok((mut texture, mut sprite)) = player_children_query.get_mut(*child) {
-                    *texture = match ev.amount {
-                        0 => Handle::default(),
-                        _ => item_sprites[&ev.item_type].clone(),
-                    };
-                    *sprite = match ev.amount {
-                        0 => Sprite::default(),
-                        _ => Sprite {
-                            custom_size: Some(Vec2::new(8., 8.)),
-                            ..default()
-                        },
-                    }
+        let player_children = player_query.get_single().expect("No player children");
+        for child in player_children.iter() {
+            if let Ok((mut texture, mut sprite)) = player_children_query.get_mut(*child) {
+                // Display in hand, empty hand if 0 amount
+                if inventory.selected_index >= inventory.item_placement.len() {
+                    *texture = Handle::default();
+                    *sprite = Sprite::default();
+                    continue;
                 }
+                let item_type = inventory.item_placement[inventory.selected_index];
+
+                *texture = item_sprites[&item_type].clone();
+                *sprite = Sprite {
+                    custom_size: Some(Vec2::new(8., 8.)),
+                    ..default()
+                };
             }
         }
     }

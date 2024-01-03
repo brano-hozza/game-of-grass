@@ -57,6 +57,33 @@ fn moving_in_direction(keyboard_input: &Res<Input<KeyCode>>, rotation: &Rotation
     }
 }
 
+// Player rotation based on mouse position
+pub fn rotate_player(
+    mut cursor_evr: EventReader<CursorMoved>,
+    mut player_query: Query<(&mut Rotation, &Transform, &mut Handle<Image>), With<Player>>,
+    player_sprites: Res<PlayerSprites>,
+) {
+    if let Ok((mut rotation, transform, mut sprite)) = player_query.get_single_mut() {
+        for event in cursor_evr.read() {
+            println!("Cursor moved: {:?}", event.position);
+            println!("Player position: {:?}", transform.local_x());
+            if transform.translation.x < event.position.x {
+                *rotation = Rotation::Right;
+                *sprite = player_sprites.right.clone();
+            } else if transform.translation.x > event.position.x {
+                *rotation = Rotation::Left;
+                *sprite = player_sprites.left.clone();
+            } else if transform.translation.y < event.position.y {
+                *rotation = Rotation::Up;
+                *sprite = player_sprites.up.clone();
+            } else if transform.translation.y > event.position.y {
+                *rotation = Rotation::Down;
+                *sprite = player_sprites.down.clone();
+            }
+        }
+    }
+}
+
 pub fn player_movement(
     keyboard_input: Res<Input<KeyCode>>,
     mut player_query: Query<
@@ -135,31 +162,30 @@ pub fn confine_player_movement(
     mut player_query: Query<&mut Transform, With<Player>>,
     window_query: Query<&Window, With<PrimaryWindow>>,
 ) {
-    if let Ok(mut player_transform) = player_query.get_single_mut() {
-        let window = window_query.get_single().unwrap();
+    let mut player_transform = player_query.get_single_mut().expect("No player");
+    let window = window_query.get_single().unwrap();
 
-        let x_min = 0.0;
-        let x_max = window.width() - TILE_SIZE;
-        let y_min = 0.0;
-        let y_max = window.height() - TILE_SIZE;
+    let x_min = 0.0;
+    let x_max = window.width() - TILE_SIZE;
+    let y_min = 0.0;
+    let y_max = window.height() - TILE_SIZE;
 
-        let mut translation = player_transform.translation;
+    let mut translation = player_transform.translation;
 
-        // Bound the player x position
-        if translation.x < x_min {
-            translation.x = x_min;
-        } else if translation.x > x_max {
-            translation.x = x_max;
-        }
-        // Bound the players y position.
-        if translation.y < y_min {
-            translation.y = y_min;
-        } else if translation.y > y_max {
-            translation.y = y_max;
-        }
-
-        player_transform.translation = translation;
+    // Bound the player x position
+    if translation.x < x_min {
+        translation.x = x_min;
+    } else if translation.x > x_max {
+        translation.x = x_max;
     }
+    // Bound the players y position.
+    if translation.y < y_min {
+        translation.y = y_min;
+    } else if translation.y > y_max {
+        translation.y = y_max;
+    }
+
+    player_transform.translation = translation;
 }
 
 pub fn player_breaking(
@@ -243,8 +269,7 @@ pub fn try_place_item(
             .find(|(_, point)| target == **point)
             .unwrap()
             .0;
-        println!("Placing item: {:?}", item_type);
-        println!("Inventory: {:?}", inventory);
+
         let item = inventory.get_item(&item_type).unwrap();
         if item.amount > 0 {
             let item = inventory.get_item(&item_type).unwrap().clone();
