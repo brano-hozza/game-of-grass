@@ -51,7 +51,12 @@ impl Plugin for InventoryPlugin {
         app.init_resource::<ItemSprites>()
             .add_systems(OnEnter(AppState::Game), spawn_inventory)
             .add_systems(OnExit(AppState::Game), despawn_inventory)
-            .add_systems(Update, (update_inventory_ui, player_item_select))
+            .add_systems(
+                Update,
+                (update_inventory_ui, player_item_select)
+                    .chain()
+                    .run_if(in_state(AppState::Game)),
+            )
             .add_event::<InventoryChangeEvent>();
     }
 }

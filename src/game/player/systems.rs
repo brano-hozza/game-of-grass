@@ -220,40 +220,44 @@ pub fn try_place_item(
     tile_textures: Res<TileTextures>,
 ) {
     if keyboard_input.pressed(KeyCode::Q) {
-        if let Ok((player_coordinates, rotation)) = player_query.get_single() {
-            let mut inventory = inventory_query.get_single_mut().expect("No inventory");
-            let item_type = inventory.item_placement[inventory.selected_index].clone();
-            if item_type == ItemType::None || item_type == ItemType::Gold {
-                return;
-            }
-            if let Ok(mut game_map) = map_query.get_single_mut() {
-                let target = player_coordinates + rotation;
-                if let Some(tile) = game_map.get_tile_mut(&target) {
-                    if tile != &TileType::Grass {
-                        return;
-                    }
-                    let mut texture = tile_query
-                        .iter_mut()
-                        .find(|(_, point)| target == **point)
-                        .unwrap()
-                        .0;
+        let (player_coordinates, rotation) = player_query.get_single().expect("No player");
+        let mut inventory = inventory_query.get_single_mut().expect("No inventory");
+        let inv_size = inventory.item_placement.len();
+        if inv_size == 0 {
+            return;
+        }
+        let item_type = inventory.item_placement[inventory.selected_index].clone();
+        if item_type == ItemType::None || item_type == ItemType::Gold {
+            return;
+        }
 
-                    let item = inventory.get_item(&item_type).unwrap();
-                    if item.amount > 0 {
-                        inventory.remove_item(&item_type, 1);
+        let mut game_map = map_query.get_single_mut().expect("No map");
+        let target = player_coordinates + rotation;
 
-                        let item = inventory.get_item(&item_type).unwrap();
+        let tile = game_map.get_tile_mut(&target).expect("Missing tile");
+        if tile != &TileType::Grass {
+            return;
+        }
+        let mut texture = tile_query
+            .iter_mut()
+            .find(|(_, point)| target == **point)
+            .unwrap()
+            .0;
+        println!("Placing item: {:?}", item_type);
+        println!("Inventory: {:?}", inventory);
+        let item = inventory.get_item(&item_type).unwrap();
+        if item.amount > 0 {
+            let item = inventory.get_item(&item_type).unwrap().clone();
 
-                        *tile = item_type.into();
-                        *texture = tile_textures[tile].clone();
+            inventory.remove_item(&item_type, 1);
 
-                        ev_invent_change.send(InventoryChangeEvent {
-                            item_type,
-                            amount: item.amount,
-                        })
-                    }
-                }
-            }
+            *tile = item_type.into();
+            *texture = tile_textures[tile].clone();
+
+            ev_invent_change.send(InventoryChangeEvent {
+                item_type,
+                amount: item.amount - 1,
+            })
         }
     }
 }

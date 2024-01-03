@@ -107,12 +107,13 @@ pub fn update_inventory_ui(
     mut commands: Commands,
     mut ev_invent_change: EventReader<InventoryChangeEvent>,
     mut items_query: Query<(&mut Item, &mut Text)>,
-    player_query: Query<(&Inventory, &Children), With<Player>>,
+    player_query: Query<&Children, With<Player>>,
     mut player_children_query: Query<(&mut Handle<Image>, &mut Sprite)>,
-    inventory_query: Query<Entity, With<Inventory>>,
+    inventory_query: Query<(Entity, &Inventory)>,
     item_sprites: Res<ItemSprites>,
     asset_server: Res<AssetServer>,
 ) {
+    let (inventory_entity, inventory) = inventory_query.get_single().expect("No inventory");
     for ev in ev_invent_change.read() {
         if let Some((_, mut text)) = items_query
             .iter_mut()
@@ -122,79 +123,80 @@ pub fn update_inventory_ui(
         } else {
             println!("New item: {:?}", ev.item_type);
             // Add new item to UI
-            if let Ok((inventory, _)) = player_query.get_single() {
-                // New index for item
-                let index = inventory.item_placement.len();
-                let inventory_entity = inventory_query.get_single().expect("No inventory");
-                let mut inventory_ui = commands.entity(inventory_entity);
+            // New index for item
+            let index = inventory.item_placement.len() - 1;
+            println!("New index: {}", index);
+            let mut inventory_ui = commands.entity(inventory_entity);
 
-                inventory_ui.with_children(|parent| {
-                    let font = asset_server.load("fonts/FiraSans-Bold.ttf");
-                    let mut item_box = parent.spawn(NodeBundle {
-                        style: Style {
-                            flex_direction: FlexDirection::Column,
-                            align_items: AlignItems::Center,
-                            justify_content: JustifyContent::FlexEnd,
-                            border: UiRect::all(Val::Px(2.)),
-                            width: Val::Px(60.),
-                            height: Val::Px(60.),
-                            padding: UiRect {
-                                top: Val::Px(2.),
-                                bottom: Val::Px(0.),
-                                ..default()
-                            },
+            inventory_ui.with_children(|parent| {
+                let font = asset_server.load("fonts/FiraSans-Bold.ttf");
+                let mut item_box = parent.spawn(NodeBundle {
+                    style: Style {
+                        flex_direction: FlexDirection::Column,
+                        align_items: AlignItems::Center,
+                        justify_content: JustifyContent::FlexEnd,
+                        border: UiRect::all(Val::Px(2.)),
+                        width: Val::Px(60.),
+                        height: Val::Px(60.),
+                        padding: UiRect {
+                            top: Val::Px(2.),
+                            bottom: Val::Px(0.),
                             ..default()
                         },
-                        border_color: Color::rgb(0.5, 0.5, 0.5).into(),
-                        background_color: Color::WHITE.into(),
-
                         ..default()
-                    });
+                    },
+                    border_color: Color::rgb(0.5, 0.5, 0.5).into(),
+                    background_color: Color::GRAY.into(),
 
-                    item_box.with_children(|parent| {
-                        parent.spawn((
-                            NodeBundle {
-                                style: Style {
-                                    width: Val::Px(50.),
-                                    height: Val::Px(60.),
-                                    ..default()
-                                },
-                                background_color: Color::WHITE.into(),
+                    ..default()
+                });
+
+                item_box.with_children(|parent| {
+                    parent.spawn((
+                        NodeBundle {
+                            style: Style {
+                                width: Val::Px(50.),
+                                height: Val::Px(60.),
                                 ..default()
                             },
-                            UiImage::new(item_sprites[&ev.item_type].clone()),
-                        ));
-                    });
-
-                    item_box.with_children(|parent| {
-                        parent.spawn((
-                            TextBundle::from_section(
-                                format!("Empty"),
-                                TextStyle {
-                                    font: font.clone(),
-                                    font_size: 10.,
-                                    color: if inventory.selected_index == index {
-                                        Color::RED
-                                    } else {
-                                        Color::BLACK
-                                    },
-                                    ..default()
-                                },
-                            ),
-                            ItemIndex(index),
-                            Item {
-                                item_type: ev.item_type,
-                                amount: 0,
-                            },
-                            Label,
-                        ));
-                    });
+                            background_color: Color::WHITE.into(),
+                            ..default()
+                        },
+                        UiImage::new(item_sprites[&ev.item_type].clone()),
+                    ));
                 });
-            }
+
+                item_box.with_children(|parent| {
+                    parent.spawn((
+                        TextBundle::from_section(
+                            format!("{} = {}", ev.item_type, ev.amount),
+                            TextStyle {
+                                font: font.clone(),
+                                font_size: 10.,
+                                color: if inventory.selected_index == index {
+                                    Color::RED
+                                } else {
+                                    Color::BLACK
+                                },
+                                ..default()
+                            },
+                        ),
+                        ItemIndex(index),
+                        Item {
+                            item_type: ev.item_type,
+                            amount: 0,
+                        },
+                        Label,
+                    ));
+                });
+            });
         }
 
         // Display in hand, empty hand if 0 amount
-        if let Ok((inventory, player_children)) = player_query.get_single() {
+        if let Ok(player_children) = player_query.get_single() {
+            if inventory.selected_index >= inventory.item_placement.len() {
+                continue;
+            }
             if inventory.item_placement[inventory.selected_index] != ev.item_type {
                 continue;
             }
@@ -219,24 +221,31 @@ pub fn update_inventory_ui(
 
 pub fn player_item_select(
     mut mouse_input: EventReader<MouseWheel>,
-    mut player_query: Query<(&mut Inventory, &Children), With<Player>>,
+    mut player_query: Query<&Children, With<Player>>,
     mut player_children_query: Query<(&mut Handle<Image>, &mut Sprite)>,
     mut items_query: Query<(&mut ItemIndex, &mut Text)>,
+    mut inventory_query: Query<&mut Inventory>,
     item_sprites: Res<ItemSprites>,
 ) {
-    if let Ok((mut inventory, player_children)) = player_query.get_single_mut() {
+    let mut inventory = inventory_query.get_single_mut().expect("No inventory");
+    let inv_size = inventory.item_placement.len();
+    if inv_size == 0 {
+        return;
+    }
+    let max_index = inv_size - 1;
+    if let Ok(player_children) = player_query.get_single_mut() {
         for ev in mouse_input.read() {
             match ev.unit {
                 MouseScrollUnit::Pixel => {
                     if ev.y < 0.0 {
-                        if inventory.selected_index + 1 > 8 {
+                        if inventory.selected_index + 1 > max_index {
                             inventory.selected_index = 0;
                         } else {
                             inventory.selected_index += 1;
                         }
                     } else if ev.y > 0.0 {
                         if (inventory.selected_index as i8) - 1 < 0 {
-                            inventory.selected_index = 8;
+                            inventory.selected_index = max_index;
                         } else {
                             inventory.selected_index -= 1;
                         }
@@ -244,14 +253,14 @@ pub fn player_item_select(
                 }
                 MouseScrollUnit::Line => {
                     if ev.y < 0.0 {
-                        if inventory.selected_index + 1 > 8 {
+                        if inventory.selected_index + 1 > max_index {
                             inventory.selected_index = 0;
                         } else {
                             inventory.selected_index += 1;
                         }
                     } else if ev.y > 0.0 {
                         if (inventory.selected_index as i8) - 1 < 0 {
-                            inventory.selected_index = 8;
+                            inventory.selected_index = max_index;
                         } else {
                             inventory.selected_index -= 1;
                         }

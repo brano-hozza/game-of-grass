@@ -4,7 +4,7 @@ use bevy::prelude::*;
 
 use super::ItemType;
 
-#[derive(Clone, Component)]
+#[derive(Clone, Component, Debug)]
 pub struct Item {
     pub item_type: ItemType,
     pub amount: usize,
@@ -13,7 +13,7 @@ pub struct Item {
 #[derive(Clone, Component)]
 pub struct ItemIndex(pub usize);
 
-#[derive(Component, Clone)]
+#[derive(Component, Clone, Debug)]
 pub struct Inventory {
     pub items: HashMap<ItemType, Item>,
     pub item_placement: Vec<ItemType>,
@@ -47,6 +47,9 @@ impl Inventory {
             if existing_item.amount == 0 {
                 self.items.remove(item_type);
                 self.item_placement.retain(|item| item != item_type);
+                if self.selected_index + 1 > self.item_placement.len() {
+                    self.selected_index = 0;
+                }
             }
         }
     }
