@@ -13,7 +13,6 @@ use super::{
     components::{Inventory, InventoryUI, ItemIndex},
     events::InventoryChangeEvent,
     resources::ItemSprites,
-    ItemType,
 };
 
 pub fn spawn_inventory(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -194,28 +193,29 @@ pub fn update_inventory_ui(
             .get_single()
             .expect("Error: No player children");
         for child in player_children.iter() {
-            if let Ok((mut texture, mut sprite)) = player_children_query.get_mut(*child) {
-                // Display in hand, empty hand if 0 amount
-                if inventory.selected_index >= inventory.item_placement.len() {
-                    *texture = Handle::default();
-                    *sprite = Sprite::default();
-                    continue;
-                }
-                let item_type = inventory.item_placement[inventory.selected_index];
-
-                *texture = item_sprites[&item_type].clone();
-                *sprite = Sprite {
-                    custom_size: Some(Vec2::new(8., 8.)),
-                    ..default()
-                };
+            let (mut texture, mut sprite) = player_children_query
+                .get_mut(*child)
+                .expect("Error: Missing player child");
+            // Display in hand, empty hand if 0 amount
+            if inventory.selected_index >= inventory.item_placement.len() {
+                *texture = Handle::default();
+                *sprite = Sprite::default();
+                continue;
             }
+            let item_type = inventory.item_placement[inventory.selected_index];
+
+            *texture = item_sprites[&item_type].clone();
+            *sprite = Sprite {
+                custom_size: Some(Vec2::new(8., 8.)),
+                ..default()
+            };
         }
     }
 }
 
 pub fn player_item_select(
     mut mouse_input: EventReader<MouseWheel>,
-    mut player_query: Query<&Children, With<Player>>,
+    player_query: Query<&Children, With<Player>>,
     mut player_children_query: Query<(&mut Handle<Image>, &mut Sprite)>,
     mut items_query: Query<(&mut ItemIndex, &mut Text)>,
     mut inventory_query: Query<&mut Inventory>,
@@ -229,81 +229,62 @@ pub fn player_item_select(
         return;
     }
     let max_index = inv_size - 1;
-    if let Ok(player_children) = player_query.get_single_mut() {
-        for ev in mouse_input.read() {
-            match ev.unit {
-                MouseScrollUnit::Pixel => {
-                    if ev.y < 0.0 {
-                        if inventory.selected_index + 1 > max_index {
-                            inventory.selected_index = 0;
-                        } else {
-                            inventory.selected_index += 1;
-                        }
-                    } else if ev.y > 0.0 {
-                        if (inventory.selected_index as i8) - 1 < 0 {
-                            inventory.selected_index = max_index;
-                        } else {
-                            inventory.selected_index -= 1;
-                        }
+    for ev in mouse_input.read() {
+        match ev.unit {
+            MouseScrollUnit::Pixel => {
+                if ev.y < 0.0 {
+                    if inventory.selected_index + 1 > max_index {
+                        inventory.selected_index = 0;
+                    } else {
+                        inventory.selected_index += 1;
                     }
-                }
-                MouseScrollUnit::Line => {
-                    if ev.y < 0.0 {
-                        if inventory.selected_index + 1 > max_index {
-                            inventory.selected_index = 0;
-                        } else {
-                            inventory.selected_index += 1;
-                        }
-                    } else if ev.y > 0.0 {
-                        if (inventory.selected_index as i8) - 1 < 0 {
-                            inventory.selected_index = max_index;
-                        } else {
-                            inventory.selected_index -= 1;
-                        }
+                } else if ev.y > 0.0 {
+                    if (inventory.selected_index as i8) - 1 < 0 {
+                        inventory.selected_index = max_index;
+                    } else {
+                        inventory.selected_index -= 1;
                     }
                 }
             }
-
-            // Display in UI
-
-            for (_, mut text) in items_query.iter_mut() {
-                text.sections[0].style.color = Color::BLACK;
+            MouseScrollUnit::Line => {
+                if ev.y < 0.0 {
+                    if inventory.selected_index + 1 > max_index {
+                        inventory.selected_index = 0;
+                    } else {
+                        inventory.selected_index += 1;
+                    }
+                } else if ev.y > 0.0 {
+                    if (inventory.selected_index as i8) - 1 < 0 {
+                        inventory.selected_index = max_index;
+                    } else {
+                        inventory.selected_index -= 1;
+                    }
+                }
             }
-            let item_type = inventory.item_placement[inventory.selected_index];
-            let amount = if item_type == ItemType::None {
-                0
+        }
+
+        // Display in UI
+
+        for (index, mut text) in items_query.iter_mut() {
+            text.sections[0].style.color = if index.0 == inventory.selected_index {
+                Color::RED
             } else {
-                inventory.get_item(&item_type).unwrap().amount
+                Color::BLACK
             };
+        }
+        let item_type = inventory.item_placement[inventory.selected_index];
 
-            if let Some((_, mut text)) = items_query
-                .iter_mut()
-                .find(|(i, _)| i.0 == inventory.selected_index)
-            {
-                text.sections[0].style.color = Color::RED;
-                if let Some(item) = inventory.items.get(&item_type) {
-                    text.sections[0].value = format!("{} = {}", item_type, item.amount);
-                } else {
-                    text.sections[0].value = format!("Empty");
-                }
-            }
+        let player_children = player_query
+            .get_single()
+            .expect("Error: No player children");
 
-            for child in player_children.iter() {
-                if let Ok((mut texture, mut sprite)) = player_children_query.get_mut(*child) {
-                    *texture = if amount == 0 {
-                        Handle::default()
-                    } else {
-                        item_sprites[&item_type].clone()
-                    };
-                    *sprite = if amount == 0 {
-                        Sprite::default()
-                    } else {
-                        Sprite {
-                            custom_size: Some(Vec2::new(8., 8.)),
-                            ..default()
-                        }
-                    }
-                }
+        for child in player_children.iter() {
+            if let Ok((mut texture, mut sprite)) = player_children_query.get_mut(*child) {
+                *texture = item_sprites[&item_type].clone();
+                *sprite = Sprite {
+                    custom_size: Some(Vec2::new(8., 8.)),
+                    ..default()
+                };
             }
         }
     }
